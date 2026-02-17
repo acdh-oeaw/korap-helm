@@ -1,0 +1,81 @@
+name: Publish Helm Repo
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.14.4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Build Helm repo
+        run: |
+          rm -rf site
+          mkdir -p site
+          helm package charts/korap --destination site
+          helm repo index site --url https://acdh-oeaw.github.io/korap-helm/
+
+      - name: Generate index.html
+        run: |
+          cat << 'EOF' > site/index.html
+          <html>
+          <head>
+            <meta charset="UTF-8"/>
+            <title>Helm Repository – korap</title>
+            <style>
+              body { font-family: Arial, sans-serif; padding: 20px; }
+              table { border-collapse: collapse; width: 100%; }
+              th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+              th { background: #f4f4f4; }
+            </style>
+          </head>
+          <body>
+            <h1>korap Helm Repository</h1>
+            <p>This repository contains Helm charts and the index.yaml used by the Helm CLI.</p>
+
+            <h2>Files</h2>
+            <table>
+              <tr><th>Name</th><th>Size</th></tr>
+          EOF
+
+          for file in site/*; do
+            fname=$(basename "$file")
+            fsize=$(stat -c%s "$file")
+            echo "<tr><td><a href=\"$fname\">$fname</a></td><td>${fsize} bytes</td></tr>" >> site/index.html
+          done
+
+          echo "</table></body></html>" >> site/index.html
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy-pages.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deploy-pages
+        uses: actions/deploy-pages@v4

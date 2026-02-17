@@ -1,0 +1,158 @@
+apiVersion: v2
+name: korap
+version: 1.0.0
+description: Full production-ready Helm chart for the KorAP Corpus Analysis Platform.
+type: application
+appVersion: "1.0.0"
+
+home: https://korap.ids-mannheim.de/
+sources:
+  - https://github.com/acdh-oeaw/korap-helm
+  - https://github.com/KorAP/KorAP-Docker
+
+keywords:
+  - korap
+  - corpus-analysis
+  - linguistics
+  - digital-humanities
+  - fulltext-search
+  - indexing
+
+maintainers:
+  - name: ACDH-CH DevOps
+    email: acdh-helpdesk@oeaw.ac.at
+
+annotations:
+  chart.korap.values.documentation: |
+    ================================
+    KorAP Helm Chart – Values.yaml Documentation
+    ================================
+
+    This section describes all configuration options available in the chart's values.yaml.
+    These options control deployment parameters for Kalamar, Kustvakt, Krill,
+    indexing behaviour, ingress, TLS, resources, and global settings.
+
+    ----------------------------------------------------------------------
+    GLOBAL SETTINGS
+    ----------------------------------------------------------------------
+    global.imagePullPolicy
+      Pull policy for all container images (default: IfNotPresent)
+
+    global.storageClass
+      StorageClass used for PVCs (if persistence is enabled)
+
+    ----------------------------------------------------------------------
+    INDEX CONFIGURATION
+    ----------------------------------------------------------------------
+    index.existingPVC
+      Name of an existing PersistentVolumeClaim to mount as the index
+
+    index.downloadTestIndex
+      If true, downloads the KorAP test index as an init image
+
+    index.testIndexImage
+      Docker image containing a pre-built example index
+
+    ----------------------------------------------------------------------
+    KALAMAR (Frontend)
+    ----------------------------------------------------------------------
+    kalamar.enabled
+      Enables/disables Kalamar frontend deployment
+
+    kalamar.image
+      Full image reference (repository:tag) for Kalamar
+
+    kalamar.replicaCount
+      Number of frontend replicas
+
+    kalamar.service.type
+      Service type (ClusterIP / NodePort / LoadBalancer)
+
+    kalamar.service.port
+      Internal service port for Kalamar (default: 64543)
+
+    kalamar.service.nodePort
+      NodePort value (only if type=NodePort)
+
+    kalamar.resources
+      CPU/memory requests and limits for the Kalamar pod
+
+    kalamar.extraEnv
+      Optional additional environment variables for Kalamar
+
+    ----------------------------------------------------------------------
+    KUSTVAKT (Auth & Policy)
+    ----------------------------------------------------------------------
+    kustvakt.enabled
+      Enables/disables the Kustvakt service
+
+    kustvakt.image
+      Full image reference for Kustvakt
+
+    kustvakt.replicaCount
+      Number of Kustvakt replicas
+
+    kustvakt.ldap.enabled
+      Enable LDAP authentication backend
+
+    kustvakt.ldap.configSecret
+      K8s Secret containing LDAP config files
+
+    kustvakt.resources
+      CPU/memory requests and limits
+
+    ----------------------------------------------------------------------
+    KRILL (Index/Search Backend)
+    ----------------------------------------------------------------------
+    krill.enabled
+      Enables/disables Krill search backend
+
+    krill.image
+      Full image reference for Krill
+
+    krill.replicaCount
+      Number of backend replicas
+
+    krill.persistence.enabled
+      Enable/disable persistent storage
+
+    krill.persistence.size
+      PVC size (e.g. 50Gi)
+
+    krill.resources
+      CPU/memory requests and limits
+
+    ----------------------------------------------------------------------
+    INGRESS & TLS
+    ----------------------------------------------------------------------
+    ingress.enabled
+      Enable external Ingress routing
+
+    ingress.className
+      Ingress controller class (e.g. nginx)
+
+    ingress.annotations
+      Controller-specific annotations (e.g. cert-manager)
+
+    ingress.hosts.host
+      Domain name (e.g. korap.example.org)
+
+    ingress.tls
+      TLS configuration (secretName + hosts)
+
+    ----------------------------------------------------------------------
+    AUTOSCALING
+    ----------------------------------------------------------------------
+    autoscaling.enabled
+      Enable HorizontalPodAutoscaler
+
+    autoscaling.minReplicas
+    autoscaling.maxReplicas
+    autoscaling.targetCPUUtilizationPercentage
+
+    ----------------------------------------------------------------------
+    NOTES
+    ----------------------------------------------------------------------
+    - Kalamar expects Kustvakt to be reachable via service DNS.
+    - Krill requires an index; use test index or PVC.
+    - TLS support requires cert-manager.

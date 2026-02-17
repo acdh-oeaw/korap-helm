@@ -1,0 +1,19 @@
+{{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).kustvaktDataVolume | default dict).enabled }}
+{{- if not ((.Values.full | default dict).kustvaktDataVolume | default dict).existingClaim }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "korap.fullname" . }}-kustvakt-data
+  labels:
+    {{- include "korap.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ ((.Values.full | default dict).kustvaktDataVolume | default dict).size }}
+  {{- if ((.Values.full | default dict).kustvaktDataVolume | default dict).storageClassName }}
+  storageClassName: {{ ((.Values.full | default dict).kustvaktDataVolume | default dict).storageClassName }}
+  {{- end }}
+{{- end }}
+{{- end }}

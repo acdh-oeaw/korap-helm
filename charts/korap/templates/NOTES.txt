@@ -1,0 +1,18 @@
+KorAP deployment complete.
+
+Kalamar:
+  Service: {{ include "korap.fullname" . }}-kalamar
+  Port: {{ ((.Values.service | default dict).kalamar | default dict).port }}
+
+Kustvakt:
+  Service: {{ include "korap.fullname" . }}-kustvakt
+  Port: {{ ((.Values.service | default dict).kustvakt | default dict).port }}
+
+Profile: {{ if (.Values.full | default dict).enabled }}full{{ else }}lite{{ end }}
+
+Index Volume:
+{{- if (.Values.indexVolume | default dict).existingClaim }}
+  Using existing PVC: {{ (.Values.indexVolume | default dict).existingClaim }}
+{{- else }}
+  Created PVC: {{ include "korap.fullname" . }}-index
+{{- end }}

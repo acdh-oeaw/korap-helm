@@ -1,0 +1,17 @@
+{{- if not (( .Values.indexVolume | default dict ).existingClaim) }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "korap.fullname" . }}-index
+  labels:
+    {{- include "korap.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ (.Values.indexVolume | default dict).size }}
+  {{- if (.Values.indexVolume | default dict).storageClassName }}
+  storageClassName: {{ (.Values.indexVolume | default dict).storageClassName }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,78 @@
+{{- if .Values.kustvaktFull.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "korap.fullname" . }}-kustvakt-full
+  labels:
+    {{- include "korap.labels" . | nindent 4 }}
+    variant: full
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kustvakt-full
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: kustvakt-full
+        release: {{ .Release.Name }}
+    spec:
+      {{- with .Values.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "korap.fullname" . }}
+      restartPolicy: {{ .Values.restartPolicy | default "Always" }}
+      containers:
+        - name: kustvakt-full
+          image: "{{ (.Values.kustvaktFull | default dict).image }}"
+          imagePullPolicy: {{ (.Values.global | default dict).imagePullPolicy }}
+
+          ports:
+            - name: http
+              containerPort: {{ ((.Values.service | default dict).kustvakt | default dict).port }}
+
+          env:
+            {{- with (.Values.kustvaktFull | default dict).extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+
+          volumeMounts:
+            - name: index
+              mountPath: /kustvakt/index
+
+            {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).kustvaktDataVolume | default dict).enabled }}
+            - name: data
+              mountPath: "{{ ((.Values.full | default dict).kustvaktDataVolume | default dict).mountPath }}"
+            {{- end }}
+
+      volumes:
+        - name: index
+          persistentVolumeClaim:
+            claimName: {{ if (.Values.indexVolume | default dict).existingClaim }}{{ (.Values.indexVolume | default dict).existingClaim }}{{ else }}{{ include "korap.fullname" . }}-index{{ end }}
+
+        {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).kustvaktDataVolume | default dict).enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ if ((.Values.full | default dict).kustvaktDataVolume | default dict).existingClaim }}{{ ((.Values.full | default dict).kustvaktDataVolume | default dict).existingClaim }}{{ else }}{{ include "korap.fullname" . }}-kustvakt-data{{ end }}
+        {{- end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "korap.fullname" . }}-kustvakt-full
+  labels:
+    {{- include "korap.labels" . | nindent 4 }}
+    variant: full
+spec:
+  type: {{ ((.Values.service | default dict).kustvakt | default dict).type }}
+  selector:
+    app: kustvakt-full
+    release: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: {{ ((.Values.service | default dict).kustvakt | default dict).port }}
+      targetPort: http
+{{- end }}

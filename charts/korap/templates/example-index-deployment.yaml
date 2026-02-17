@@ -1,0 +1,38 @@
+{{- if .Values.exampleIndex.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "korap.fullname" . }}-example-index
+  labels:
+    {{- include "korap.labels" . | nindent 4 }}
+    app: example-index
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: example-index
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: example-index
+        release: {{ .Release.Name }}
+    spec:
+      {{- with .Values.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      restartPolicy: Never
+      containers:
+        - name: example-index
+          image: "{{ (.Values.exampleIndex | default dict).image }}"
+          imagePullPolicy: {{ (.Values.global | default dict).imagePullPolicy }}
+
+          volumeMounts:
+            - name: example-index
+              mountPath: /kustvakt/index
+
+      volumes:
+        - name: example-index
+          emptyDir: {}
+{{- end }}

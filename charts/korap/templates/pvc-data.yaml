@@ -1,0 +1,19 @@
+{{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).dataVolume | default dict).enabled }}
+{{- if not ((.Values.full | default dict).dataVolume | default dict).existingClaim }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "korap.fullname" . }}-data
+  labels:
+    {{- include "korap.labels" . | nindent 4 }}
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: {{ ((.Values.full | default dict).dataVolume | default dict).size }}
+  {{- if ((.Values.full | default dict).dataVolume | default dict).storageClassName }}
+  storageClassName: {{ ((.Values.full | default dict).dataVolume | default dict).storageClassName }}
+  {{- end }}
+{{- end }}
+{{- end }}

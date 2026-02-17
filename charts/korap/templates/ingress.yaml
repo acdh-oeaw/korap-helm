@@ -1,0 +1,35 @@
+{{- if (.Values.ingress | default dict).enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "korap.fullname" . }}
+  {{- with (.Values.ingress | default dict).annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if (.Values.ingress | default dict).className }}
+  ingressClassName: {{ (.Values.ingress | default dict).className }}
+  {{- end }}
+
+  rules:
+    {{- range (.Values.ingress | default dict).hosts }}
+    - host: {{ .host }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "korap.fullname" $ }}-kalamar
+                port:
+                  number: {{ (($.Values.service | default dict).kalamar | default dict).port }}
+          {{- end }}
+    {{- end }}
+
+  {{- if (.Values.ingress | default dict).tls }}
+  tls:
+    {{- toYaml (.Values.ingress | default dict).tls | nindent 4 }}
+  {{- end }}
+{{- end }}

@@ -1,0 +1,11 @@
+{{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).kalamarProductionConf | default dict).enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "korap.fullname" . }}-kalamar-conf
+  labels:
+    {{- include "korap.labels" . | nindent 4 }}
+data:
+  kalamar.production.conf: |
+{{ ((.Values.full | default dict).kalamarProductionConf | default dict).content | indent 4 }}
+{{- end }}

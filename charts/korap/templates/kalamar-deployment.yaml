@@ -1,0 +1,103 @@
+{{- if not (.Values.full | default dict).enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "korap.fullname" . }}-kalamar
+  labels:
+    {{- include "korap.labels" . | nindent 4 }}
+spec:
+  replicas: {{ (.Values.kalamar | default dict).replicaCount }}
+  selector:
+    matchLabels:
+      app: kalamar
+      release: {{ .Release.Name }}
+  selector:
+    matchLabels:
+      app: kalamar
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: kalamar
+        release: {{ .Release.Name }}
+    spec:
+      {{- with .Values.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "korap.fullname" . }}
+      restartPolicy: {{ .Values.restartPolicy | default "Always" }}
+      containers:
+        - name: kalamar
+          image: "{{ (.Values.kalamar | default dict).image }}"
+          imagePullPolicy: {{ (.Values.global | default dict).imagePullPolicy }}
+
+          env:
+            - name: KALAMAR_API
+              value: 'http://{{ include "korap.fullname" . }}-kustvakt:{{ ((.Values.service | default dict).kustvakt | default dict).port }}/api/'
+            {{- with (.Values.kalamar | default dict).extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+
+          ports:
+            - name: http
+              containerPort: {{ ((.Values.service | default dict).kalamar | default dict).port }}
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 5
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 20
+
+          volumeMounts:
+            {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).kalamarProductionConf | default dict).enabled }}
+            - name: kalamar-conf
+              mountPath: /kalamar/kalamar.production.conf
+              subPath: kalamar.production.conf
+            {{- end }}
+            {{- if and (.Values.full | default dict).enabled (.Values.full | default dict).superClientInfoSecretName }}
+            - name: super-client
+              mountPath: /kalamar/super_client_info
+              subPath: super_client_info
+            {{- end }}
+
+      volumes:
+        {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).kalamarProductionConf | default dict).enabled }}
+        - name: kalamar-conf
+          configMap:
+            name: {{ include "korap.fullname" . }}-kalamar-conf
+        {{- end }}
+        {{- if and (.Values.full | default dict).enabled (.Values.full | default dict).superClientInfoSecretName }}
+        - name: super-client
+          secret:
+            secretName: {{ (.Values.full | default dict).superClientInfoSecretName }}
+            items:
+              - key: {{ (.Values.full | default dict).superClientInfoKey }}
+                path: super_client_info
+        {{- end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "korap.fullname" . }}-kalamar
+  labels:
+    {{- include "korap.labels" . | nindent 4 }}
+spec:
+  type: {{ ((.Values.service | default dict).kalamar | default dict).type }}
+  selector:
+    app: kalamar
+    release: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: {{ ((.Values.service | default dict).kalamar | default dict).port }}
+      targetPort: http
+{{- end }}

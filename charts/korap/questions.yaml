@@ -1,0 +1,397 @@
+# questions.yaml - Rancher Helm Chart Configuration UI
+# This file defines the interactive form displayed in Rancher when installing the KorAP Helm chart
+
+questions:
+  # Profile Configuration
+  - variable: profile
+    default: "lite"
+    type: enum
+    options:
+      - "lite"
+      - "full"
+    label: "Deployment Profile"
+    description: "Choose between lite (minimal setup) or full (enterprise with authentication)"
+    group: "General Configuration"
+
+  # Global Settings
+  - variable: global.imagePullPolicy
+    default: "IfNotPresent"
+    type: enum
+    options:
+      - "Always"
+      - "IfNotPresent"
+      - "Never"
+    label: "Image Pull Policy"
+    description: "Policy for pulling container images from registry"
+    group: "Global Settings"
+
+  # Service Configuration - Kalamar
+  - variable: service.kalamar.port
+    default: 64543
+    type: int
+    min: 1
+    max: 65535
+    required: true
+    label: "Kalamar Port"
+    description: "Port for Kalamar web interface (default: 64543)"
+    group: "Service Configuration"
+
+  - variable: service.kalamar.type
+    default: "ClusterIP"
+    type: enum
+    options:
+      - "ClusterIP"
+      - "NodePort"
+      - "LoadBalancer"
+    label: "Kalamar Service Type"
+    description: "Kubernetes service type for Kalamar"
+    group: "Service Configuration"
+
+  # Service Configuration - Kustvakt
+  - variable: service.kustvakt.port
+    default: 8089
+    type: int
+    min: 1
+    max: 65535
+    required: true
+    label: "Kustvakt API Port"
+    description: "Port for Kustvakt API (default: 8089)"
+    group: "Service Configuration"
+
+  - variable: service.kustvakt.type
+    default: "ClusterIP"
+    type: enum
+    options:
+      - "ClusterIP"
+      - "NodePort"
+      - "LoadBalancer"
+    label: "Kustvakt Service Type"
+    description: "Kubernetes service type for Kustvakt"
+    group: "Service Configuration"
+
+  # Kalamar Lite Configuration
+  - variable: kalamar.image
+    default: "korap/kalamar:latest"
+    type: string
+    required: true
+    label: "Kalamar Image"
+    description: "Docker image for Kalamar (lite profile)"
+    group: "Kalamar Configuration"
+
+  - variable: kalamar.replicaCount
+    default: 1
+    type: int
+    min: 1
+    max: 10
+    label: "Kalamar Replicas"
+    description: "Number of Kalamar pod replicas"
+    group: "Kalamar Configuration"
+
+  - variable: kalamar.extraEnv
+    type: string
+    multiline: true
+    label: "Kalamar Extra Environment Variables"
+    description: "YAML format: KEY: value, one per line (for lite profile)"
+    group: "Kalamar Configuration"
+
+  # Kalamar Full Configuration
+  - variable: kalamarFull.enabled
+    default: false
+    type: boolean
+    label: "Enable Kalamar Full Profile"
+    description: "Use full Kalamar deployment with plugins (requires full.enabled=true)"
+    group: "Kalamar Full Configuration"
+
+  - variable: kalamarFull.image
+    default: "korap/kalamar:latest"
+    type: string
+    label: "Kalamar Full Image"
+    description: "Docker image for Kalamar (full profile)"
+    group: "Kalamar Full Configuration"
+    show_if: "kalamarFull.enabled=true"
+
+  - variable: kalamarFull.replicaCount
+    default: 1
+    type: int
+    min: 1
+    max: 10
+    label: "Kalamar Full Replicas"
+    description: "Number of Kalamar full pod replicas"
+    group: "Kalamar Full Configuration"
+    show_if: "kalamarFull.enabled=true"
+
+  - variable: kalamarFull.extraEnv
+    type: string
+    multiline: true
+    label: "Kalamar Full Extra Environment Variables"
+    description: "YAML format: KEY: value, one per line"
+    group: "Kalamar Full Configuration"
+    show_if: "kalamarFull.enabled=true"
+
+  # Kustvakt Lite Configuration
+  - variable: kustvakt.image
+    default: "korap/kustvakt:latest"
+    type: string
+    required: true
+    label: "Kustvakt Image"
+    description: "Docker image for Kustvakt (lite profile)"
+    group: "Kustvakt Configuration"
+
+  - variable: kustvakt.extraEnv
+    type: string
+    multiline: true
+    label: "Kustvakt Extra Environment Variables"
+    description: "YAML format: KEY: value, one per line (for lite profile)"
+    group: "Kustvakt Configuration"
+
+  # Kustvakt Full Configuration
+  - variable: kustvaktFull.enabled
+    default: false
+    type: boolean
+    label: "Enable Kustvakt Full Profile"
+    description: "Use full Kustvakt deployment with LDAP support (requires full.enabled=true)"
+    group: "Kustvakt Full Configuration"
+
+  - variable: kustvaktFull.image
+    default: "korap/kustvakt:latest-full"
+    type: string
+    label: "Kustvakt Full Image"
+    description: "Docker image for Kustvakt full version"
+    group: "Kustvakt Full Configuration"
+    show_if: "kustvaktFull.enabled=true"
+
+  - variable: kustvaktFull.extraEnv
+    type: string
+    multiline: true
+    label: "Kustvakt Full Extra Environment Variables"
+    description: "YAML format: KEY: value, one per line"
+    group: "Kustvakt Full Configuration"
+    show_if: "kustvaktFull.enabled=true"
+
+  # Example Index Configuration
+  - variable: exampleIndex.enabled
+    default: false
+    type: boolean
+    label: "Enable Example Index Container"
+    description: "Deploy example index container for testing (korap/example-index:0.1)"
+    group: "Example Container"
+
+  - variable: exampleIndex.image
+    default: "korap/example-index:0.1"
+    type: string
+    label: "Example Index Image"
+    description: "Docker image for example index"
+    group: "Example Container"
+    show_if: "exampleIndex.enabled=true"
+
+  # Index Volume Configuration
+  - variable: indexVolume.size
+    default: "10Gi"
+    type: string
+    required: true
+    label: "Index Volume Size"
+    description: "Storage size for index volume (e.g., '10Gi', '50Gi')"
+    group: "Index Volume"
+
+  - variable: indexVolume.storageClassName
+    default: ""
+    type: string
+    label: "Index Storage Class"
+    description: "Kubernetes storage class name (leave empty for default)"
+    group: "Index Volume"
+
+  - variable: indexVolume.existingClaim
+    default: ""
+    type: string
+    label: "Existing Index PVC"
+    description: "Name of existing PersistentVolumeClaim for index (if empty, a new PVC will be created)"
+    group: "Index Volume"
+
+  # Ingress Configuration
+  - variable: ingress.enabled
+    default: false
+    type: boolean
+    label: "Enable Ingress"
+    description: "Enable Kubernetes Ingress for external access"
+    group: "Ingress Configuration"
+
+  - variable: ingress.className
+    default: "nginx"
+    type: string
+    label: "Ingress Class Name"
+    description: "Kubernetes ingress class (e.g., 'nginx', 'traefik')"
+    group: "Ingress Configuration"
+    show_if: "ingress.enabled=true"
+
+  - variable: ingress.hosts
+    type: string
+    multiline: true
+    label: "Ingress Hosts"
+    description: "YAML format hosts configuration. Example: \n- host: korap.example.com\n  paths:\n    - path: /\n      pathType: Prefix"
+    group: "Ingress Configuration"
+    show_if: "ingress.enabled=true"
+
+  # Full Profile Configuration
+  - variable: full.enabled
+    default: false
+    type: boolean
+    label: "Enable Full Profile"
+    description: "Enable enterprise features (authentication, plugins, data volumes)"
+    group: "Full Profile Settings"
+
+  - variable: full.superClientInfoSecretName
+    default: ""
+    type: string
+    label: "Super Client Info Secret Name"
+    description: "Kubernetes secret containing super_client_info file (for authentication)"
+    group: "Full Profile Settings"
+    show_if: "full.enabled=true"
+
+  - variable: full.superClientInfoKey
+    default: "super_client_info"
+    type: string
+    label: "Super Client Info Key"
+    description: "Key in the secret containing the super_client_info data"
+    group: "Full Profile Settings"
+    show_if: "full.enabled=true"
+
+  - variable: full.superClientInfoPath
+    default: "/kalamar/super_client_info"
+    type: string
+    label: "Super Client Info Mount Path"
+    description: "Path where super_client_info will be mounted in containers"
+    group: "Full Profile Settings"
+    show_if: "full.enabled=true"
+
+  # Full Profile - Kalamar Data Volume
+  - variable: full.dataVolume.enabled
+    default: false
+    type: boolean
+    label: "Enable Kalamar Data Volume"
+    description: "Enable persistent data volume for Kalamar (full profile)"
+    group: "Full Profile - Data Volumes"
+    show_if: "full.enabled=true"
+
+  - variable: full.dataVolume.mountPath
+    default: "/kalamar/data"
+    type: string
+    label: "Kalamar Data Mount Path"
+    description: "Mount path for Kalamar data volume"
+    group: "Full Profile - Data Volumes"
+    show_if: "full.dataVolume.enabled=true"
+
+  - variable: full.dataVolume.size
+    default: "50Gi"
+    type: string
+    label: "Kalamar Data Volume Size"
+    description: "Storage size for Kalamar data volume"
+    group: "Full Profile - Data Volumes"
+    show_if: "full.dataVolume.enabled=true"
+
+  - variable: full.dataVolume.storageClassName
+    default: ""
+    type: string
+    label: "Kalamar Data Storage Class"
+    description: "Storage class for Kalamar data volume (leave empty for default)"
+    group: "Full Profile - Data Volumes"
+    show_if: "full.dataVolume.enabled=true"
+
+  - variable: full.dataVolume.existingClaim
+    default: ""
+    type: string
+    label: "Existing Kalamar Data PVC"
+    description: "Name of existing PVC for Kalamar data"
+    group: "Full Profile - Data Volumes"
+    show_if: "full.dataVolume.enabled=true"
+
+  # Full Profile - Kustvakt Data Volume
+  - variable: full.kustvaktDataVolume.enabled
+    default: false
+    type: boolean
+    label: "Enable Kustvakt Data Volume"
+    description: "Enable persistent data volume for Kustvakt (full profile)"
+    group: "Full Profile - Data Volumes"
+    show_if: "full.enabled=true"
+
+  - variable: full.kustvaktDataVolume.mountPath
+    default: "/kustvakt/data"
+    type: string
+    label: "Kustvakt Data Mount Path"
+    description: "Mount path for Kustvakt data volume"
+    group: "Full Profile - Data Volumes"
+    show_if: "full.kustvaktDataVolume.enabled=true"
+
+  - variable: full.kustvaktDataVolume.size
+    default: "50Gi"
+    type: string
+    label: "Kustvakt Data Volume Size"
+    description: "Storage size for Kustvakt data volume"
+    group: "Full Profile - Data Volumes"
+    show_if: "full.kustvaktDataVolume.enabled=true"
+
+  - variable: full.kustvaktDataVolume.storageClassName
+    default: ""
+    type: string
+    label: "Kustvakt Data Storage Class"
+    description: "Storage class for Kustvakt data volume (leave empty for default)"
+    group: "Full Profile - Data Volumes"
+    show_if: "full.kustvaktDataVolume.enabled=true"
+
+  - variable: full.kustvaktDataVolume.existingClaim
+    default: ""
+    type: string
+    label: "Existing Kustvakt Data PVC"
+    description: "Name of existing PVC for Kustvakt data"
+    group: "Full Profile - Data Volumes"
+    show_if: "full.kustvaktDataVolume.enabled=true"
+
+  # Full Profile - Production Configuration
+  - variable: full.kalamarProductionConf.enabled
+    default: false
+    type: boolean
+    label: "Enable Kalamar Production Configuration"
+    description: "Enable custom production configuration file for Kalamar"
+    group: "Full Profile - Configuration"
+    show_if: "full.enabled=true"
+
+  - variable: full.kalamarProductionConf.content
+    type: string
+    multiline: true
+    label: "Kalamar Production Configuration File"
+    description: "Content of the production configuration file"
+    group: "Full Profile - Configuration"
+    show_if: "full.kalamarProductionConf.enabled=true"
+
+  # Security Context
+  - variable: securityContext.runAsUser
+    default: 0
+    type: int
+    label: "Run As User ID"
+    description: "User ID for running containers (0=root, required for full profile)"
+    group: "Security Configuration"
+
+  - variable: securityContext.runAsGroup
+    default: 0
+    type: int
+    label: "Run As Group ID"
+    description: "Group ID for running containers"
+    group: "Security Configuration"
+
+  - variable: securityContext.fsGroup
+    default: 0
+    type: int
+    label: "Filesystem Group ID"
+    description: "Filesystem group ID for volume ownership"
+    group: "Security Configuration"
+
+  # Restart Policy
+  - variable: restartPolicy
+    default: "Always"
+    type: enum
+    options:
+      - "Always"
+      - "OnFailure"
+      - "Never"
+    label: "Restart Policy"
+    description: "Pod restart policy (Always=restart unless stopped, OnFailure=restart on error, Never=no restart)"
+    group: "Pod Configuration"

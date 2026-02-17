@@ -1,0 +1,77 @@
+{{- if not (.Values.full | default dict).enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "korap.fullname" . }}-kustvakt
+  labels:
+    {{- include "korap.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kustvakt
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: kustvakt
+        release: {{ .Release.Name }}
+    spec:
+      {{- with .Values.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "korap.fullname" . }}
+      restartPolicy: {{ .Values.restartPolicy | default "Always" }}
+      containers:
+        - name: kustvakt
+          image: '{{ .Values.kustvakt.image }}'
+          imagePullPolicy: IfNotPresent
+
+          ports:
+            - name: http
+              containerPort: {{ ((.Values.service | default dict).kustvakt | default dict).port }}
+
+          env:
+            {{- with (.Values.kustvakt | default dict).extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+
+          volumeMounts:
+            - name: index
+              mountPath: /kustvakt/index
+
+            {{- if and (.Values.full | default dict).enabled (.Values.full | default dict).superClientInfoSecretName }}
+            - name: super-client
+              mountPath: /kustvakt/client/super_client_info
+              subPath: super_client_info
+            {{- end }}
+
+      volumes:
+        - name: index
+          persistentVolumeClaim:
+            claimName: {{ if (.Values.indexVolume | default dict).existingClaim }}{{ (.Values.indexVolume | default dict).existingClaim }}{{ else }}{{ include "korap.fullname" . }}-index{{ end }}
+
+        {{- if and (.Values.full | default dict).enabled (.Values.full | default dict).superClientInfoSecretName }}
+        - name: super-client
+          secret:
+            secretName: {{ (.Values.full | default dict).superClientInfoSecretName }}
+        {{- end }}
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "korap.fullname" . }}-kustvakt
+  labels:
+    {{- include "korap.labels" . | nindent 4 }}
+spec:
+  type: {{ ((.Values.service | default dict).kustvakt | default dict).type }}
+  selector:
+    app: kustvakt
+    release: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: {{ ((.Values.service | default dict).kustvakt | default dict).port }}
+      targetPort: http
+{{- end }}
