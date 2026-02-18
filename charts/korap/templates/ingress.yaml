@@ -3,13 +3,15 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ include "korap.fullname" . }}
+
   {{- with (.Values.ingress | default dict).annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
   {{- end }}
+
 spec:
-  {{- if (.Values.ingress | default dict).className }}
-  ingressClassName: {{ (.Values.ingress | default dict).className }}
+  {{- with (.Values.ingress | default dict).className }}
+  ingressClassName: {{ . }}
   {{- end }}
 
   rules:
@@ -23,14 +25,15 @@ spec:
             backend:
               service:
                 {{- $base := include "korap.fullname" $ }}
-                name: {{$base}}-kalamar{{ if and ($.Values.full | default dict).enabled ($.Values.kalamarFull | default dict).enabled }}-full{{- end }}
+                name: {{ $base }}-kalamar{{ if and ($.Values.full | default dict).enabled ($.Values.kalamarFull | default dict).enabled }}-full{{- end }}
                 port:
                   number: {{ (($.Values.service | default dict).kalamar | default dict).port }}
           {{- end }}
     {{- end }}
 
-  {{- if (.Values.ingress | default dict).tls }}
+  {{- with (.Values.ingress | default dict).tls }}
   tls:
-    {{- toYaml (.Values.ingress | default dict).tls | nindent 4 }}
+    {{- toYaml . | nindent 4 }}
   {{- end }}
+
 {{- end }}
