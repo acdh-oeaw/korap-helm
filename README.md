@@ -187,20 +187,40 @@ helm install korap ./korap \
 Enterprise setup with authentication:
 
 ```bash
-# Create authentication secret (optional)
-kubectl create secret generic korap-super-client \
-  --from-file=super_client_info=./super_client_info \
-  -n korap
-
-# Install with full profile
 helm install korap ./korap \
   --namespace korap \
   --set full.enabled=true \
   --set kalamarFull.enabled=true \
   --set kustvaktFull.enabled=true \
-  --set 'full.dataVolume.enabled=true' \
-  --set 'full.superClientInfoSecretName=korap-super-client'
+  --set 'full.dataVolume.enabled=true'
 ```
+
+**Optional: Add Authentication (OAuth2/LDAP)**
+
+To enable authentication in the full profile, you must provide a `super_client_info` file:
+
+```bash
+# 1. Create authentication secret from super_client_info file
+kubectl create secret generic korap-super-client \
+  --from-file=super_client_info=./super_client_info \
+  -n korap
+
+# 2. Install/upgrade with authentication enabled
+helm upgrade korap ./korap \
+  --namespace korap \
+  --set full.enabled=true \
+  --set kalamarFull.enabled=true \
+  --set kustvaktFull.enabled=true \
+  --set 'full.dataVolume.enabled=true' \
+  --set 'full.superClientInfoSecretName=korap-super-client' \
+  --install
+```
+
+**Without Authentication Secret:**
+- Full profile will deploy successfully without authentication
+- Kalamar will run without the Auth plugin
+- No login functionality
+- Anonymous access only (if Kustvakt permits)
 
 ### 4. Install with Example Index
 
@@ -260,7 +280,113 @@ Then access: `https://korap.example.com`
 
 ---
 
-## 📚 Index Management
+## � Authentication & Authorization
+
+### Full Profile Auth Setup
+
+The full profile supports OAuth2/LDAP authentication via Kustvakt. Authentication requires a `super_client_info` file containing OAuth client configuration.
+
+### Creating the super_client_info File
+
+The `super_client_info` file is a JSON file containing OAuth2 client credentials and Kustvakt configuration:
+
+```json
+{
+  "client_id": "korap-client",
+  "client_secret": "your-secret-key",
+  "scope": "read write",
+  "redirect_uri": "http://localhost:64543/oauth2/callback",
+  "response_type": "code",
+  "grant_type": "authorization_code"
+}
+```
+
+**Or with more advanced settings:**
+
+```json
+{
+  "client_id": "korap-client",
+  "client_secret": "your-secret-key",
+  "api_token": "optional-api-token",
+  "host": "kustvakt-full:8089",
+  "version": "1.0"
+}
+```
+
+See [Kustvakt Documentation](https://github.com/KorAP/Kustvakt) for full configuration options.
+
+### Creating the Kubernetes Secret
+
+Once you have your `super_client_info` file, create a Kubernetes secret:
+
+```bash
+# Create secret from file
+kubectl create secret generic korap-super-client \
+  --from-file=super_client_info=./super_client_info \
+  -n korap
+
+# Verify secret was created
+kubectl describe secret korap-super-client -n korap
+
+# View secret contents (base64 encoded)
+kubectl get secret korap-super-client -o jsonpath='{.data.super_client_info}' -n korap | base64 -d
+```
+
+### Enabling Auth in Full Profile
+
+Reference the secret in your Helm deployment:
+
+```bash
+helm upgrade korap ./korap \
+  --namespace korap \
+  --set full.enabled=true \
+  --set kalamarFull.enabled=true \
+  --set kustvaktFull.enabled=true \
+  --set 'full.superClientInfoSecretName=korap-super-client' \
+  --install
+```
+
+This will:
+1. Mount the secret into Kalamar full at `/kalamar/super_client_info`
+2. Automatically enable the Kalamar Auth plugin
+3. Enable OAuth2 authentication in the frontend
+
+### Updating Authentication Credentials
+
+To update the OAuth credentials:
+
+```bash
+# Delete old secret
+kubectl delete secret korap-super-client -n korap
+
+# Create new secret with updated credentials
+kubectl create secret generic korap-super-client \
+  --from-file=super_client_info=./super_client_info \
+  -n korap
+
+# Restart Kalamar pod to reload credentials
+kubectl rollout restart deployment korap-korap-kalamar-full -n korap
+```
+
+### Disabling Authentication
+
+If you want to run full profile without authentication:
+
+```bash
+# Simply don't set superClientInfoSecretName
+helm upgrade korap ./korap \
+  --namespace korap \
+  --set full.enabled=true \
+  --set kalamarFull.enabled=true \
+  --set kustvaktFull.enabled=true \
+  --install
+```
+
+Kalamar will run without the Auth plugin and allow anonymous access.
+
+---
+
+## �📚 Index Management
 
 ### Using Existing Index
 

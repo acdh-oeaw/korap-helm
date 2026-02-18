@@ -237,10 +237,46 @@ This document provides a complete reference table for all configurable values in
   - Authentication configuration
 
 **full.superClientInfoSecretName** (string, default: `null`)
-- Kubernetes secret containing authentication info
-- File key: specified by `superClientInfoKey`
-- Required for authentication in full profile
-- Create with: `kubectl create secret generic ... --from-file=super_client_info=...`
+- **IMPORTANT**: This enables authentication (Auth plugin) in Kalamar full
+- Kubernetes secret containing OAuth2/authentication credentials
+- Secret file key: specified by `superClientInfoKey`
+- If not set, full profile deploys without authentication (anonymous access)
+- The secret file must contain OAuth client configuration in JSON format
+
+**How to create the secret:**
+
+a) Create `super_client_info` file (JSON format):
+```json
+{
+  "client_id": "korap-client",
+  "client_secret": "your-secret-key",
+  "scope": "read write",
+  "redirect_uri": "http://yourhost:64543/oauth2/callback"
+}
+```
+
+b) Create Kubernetes secret from file:
+```bash
+kubectl create secret generic korap-super-client \
+  --from-file=super_client_info=./super_client_info \
+  -n korap
+```
+
+c) Reference in Helm deployment:
+```bash
+helm install korap ./korap \
+  --set 'full.superClientInfoSecretName=korap-super-client' \
+  --set full.enabled=true \
+  --set kalamarFull.enabled=true
+```
+
+**What happens without this secret:**
+- Auth plugin is NOT loaded in Kalamar
+- No login/OAuth functionality
+- Anonymous access only
+- Full profile still works for other features (plugins, etc.)
+
+**See also:** [Kustvakt Documentation](https://github.com/KorAP/Kustvakt)
 
 **full.superClientInfoKey** (string, default: `super_client_info`)
 - Key in the secret containing authentication data

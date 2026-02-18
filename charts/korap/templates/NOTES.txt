@@ -16,3 +16,43 @@ Index Volume:
 {{- else }}
   Created PVC: {{ include "korap.fullname" . }}-index
 {{- end }}
+
+{{ if and (.Values.full | default dict).enabled (.Values.kalamarFull | default dict).enabled }}
+AUTHENTICATION STATUS:
+{{- if (.Values.full | default dict).superClientInfoSecretName }}
+  ✅ Auth ENABLED
+  Secret: {{ (.Values.full | default dict).superClientInfoSecretName }}
+  Kalamar Auth plugin is loaded with OAuth2/LDAP support
+{{- else }}
+  ⚠️  Auth DISABLED (optional)
+  To enable authentication, create a super_client_info secret:
+  
+  1. Create super_client_info JSON file with OAuth credentials
+  2. Create secret: kubectl create secret generic korap-super-client \
+       --from-file=super_client_info=./super_client_info -n {{ .Release.Namespace }}
+  3. Update deployment: helm upgrade {{ .Release.Name }} ./korap \
+       --set 'full.superClientInfoSecretName=korap-super-client' \
+       -n {{ .Release.Namespace }}
+  
+  See README.md for detailed authentication setup instructions.
+{{- end }}
+
+{{- end }}
+
+NEXT STEPS:
+
+1. Access Kalamar:
+   kubectl port-forward svc/{{ include "korap.fullname" . }}-kalamar {{ ((.Values.service | default dict).kalamar | default dict).port }}:{{ ((.Values.service | default dict).kalamar | default dict).port }} -n {{ .Release.Namespace }}
+   Then open: http://localhost:{{ ((.Values.service | default dict).kalamar | default dict).port }}
+
+2. Check deployment status:
+   kubectl get pods -n {{ .Release.Namespace }}
+
+3. View logs:
+   kubectl logs deployment/{{ include "korap.fullname" . }}-kalamar -n {{ .Release.Namespace }}
+   {{ if (.Values.full | default dict).enabled }}kubectl logs deployment/{{ include "korap.fullname" . }}-kalamar-full -n {{ .Release.Namespace }}{{- end }}
+
+4. For full documentation:
+   - README.md - Installation and access instructions
+   - charts/korap/VALUES.md - Configuration reference
+   - IMPLEMENTATION.md - Architecture and troubleshooting

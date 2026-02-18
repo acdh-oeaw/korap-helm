@@ -32,10 +32,12 @@ spec:
           env:
             - name: KALAMAR_API
               value: 'http://{{ include "korap.fullname" . }}-kustvakt-full:{{ ((.Values.service | default dict).kustvakt | default dict).port }}/api/'
+            {{- if and (.Values.full | default dict).enabled (.Values.full | default dict).superClientInfoSecretName }}
             - name: KALAMAR_PLUGINS
               value: "Auth"
             - name: KALAMAR_CLIENT_FILE
               value: "{{ (.Values.full | default dict).superClientInfoPath }}"
+            {{- end }}
             {{- with (.Values.kalamarFull | default dict).extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

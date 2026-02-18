@@ -243,7 +243,7 @@ questions:
     default: ""
     type: string
     label: "Super Client Info Secret Name"
-    description: "Kubernetes secret containing super_client_info file (for authentication)"
+    description: "Kubernetes secret with OAuth credentials (enables Kalamar Auth plugin). Leave empty for no authentication. To create: kubectl create secret generic <name> --from-file=super_client_info=./super_client_info"
     group: "Full Profile Settings"
     show_if: "full.enabled=true"
 
@@ -251,7 +251,7 @@ questions:
     default: "super_client_info"
     type: string
     label: "Super Client Info Key"
-    description: "Key in the secret containing the super_client_info data"
+    description: "Key in the secret containing the super_client_info data (usually 'super_client_info')"
     group: "Full Profile Settings"
     show_if: "full.enabled=true"
 
@@ -259,7 +259,7 @@ questions:
     default: "/kalamar/super_client_info"
     type: string
     label: "Super Client Info Mount Path"
-    description: "Path where super_client_info will be mounted in containers"
+    description: "Path where super_client_info will be mounted in containers (do not change)"
     group: "Full Profile Settings"
     show_if: "full.enabled=true"
 
