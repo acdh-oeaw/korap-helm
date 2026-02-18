@@ -33,8 +33,6 @@ spec:
             - name: KALAMAR_API
               value: 'http://{{ include "korap.fullname" . }}-kustvakt-full:{{ ((.Values.service | default dict).kustvakt | default dict).port }}/api/'
             {{- if and (.Values.full | default dict).enabled (.Values.full.keycloak.enabled) }}
-            - name: KALAMAR_PLUGINS
-              value: "Auth"
             - name: KALAMAR_OIDC_ISSUER
               value: "{{ .Values.full.keycloak.issuer }}"
             {{- if .Values.full.keycloak.authUrl }}
@@ -72,9 +70,11 @@ spec:
             {{- $secretName = printf "%s-super-client-info" (include "korap.fullname" .) }}
             {{- end }}
             {{- end }}
-            {{- if $secretName }}
+            {{- if or (and (.Values.full | default dict).enabled (.Values.full.keycloak.enabled)) $secretName }}
             - name: KALAMAR_PLUGINS
               value: "Auth"
+            {{- end }}
+            {{- if $secretName }}
             - name: KALAMAR_CLIENT_FILE
               value: "{{ (.Values.full | default dict).superClientInfoPath }}"
             {{- end }}
