@@ -8,7 +8,7 @@ metadata:
     {{- include "korap.labels" . | nindent 4 }}
 spec:
   accessModes:
-    - ReadWriteOnce
+    - ReadWriteMany
   resources:
     requests:
       storage: {{ ((.Values.full | default dict).kustvaktDataVolume | default dict).size }}
