@@ -22,7 +22,7 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      restartPolicy: Never
+      restartPolicy: Always
       containers:
         - name: example-index
           image: "{{ (.Values.exampleIndex | default dict).image }}"
