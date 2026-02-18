@@ -22,7 +22,8 @@ spec:
             pathType: {{ .pathType }}
             backend:
               service:
-                name: {{- if and ($.Values.full | default dict).enabled ($.Values.kalamarFull | default dict).enabled }}{{ include "korap.fullname" $ }}-kalamar-full{{- else }}{{ include "korap.fullname" $ }}-kalamar{{- end }}
+                {{- $base := include "korap.fullname" $ }}
+                name: {{$base}}-kalamar{{ if and ($.Values.full | default dict).enabled ($.Values.kalamarFull | default dict).enabled }}-full{{- end }}
                 port:
                   number: {{ (($.Values.service | default dict).kalamar | default dict).port }}
           {{- end }}
