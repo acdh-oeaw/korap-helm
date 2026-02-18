@@ -48,8 +48,8 @@ This document provides a complete reference table for all configurable values in
 | **full.kustvaktDataVolume.size** | string | `50Gi` | Size of Kustvakt data PVC |
 | **full.kustvaktDataVolume.storageClassName** | string | `null` | Storage class for Kustvakt data |
 | **full.kustvaktDataVolume.existingClaim** | string | `null` | Use existing PVC for Kustvakt data |
-| **full.kalamarProductionConf.enabled** | boolean | `false` | Enable custom production config |
-| **full.kalamarProductionConf.content** | string | `` | Production configuration file content |
+| **full.kalamarProductionConf.enabled** | boolean | `false` | Enable custom Kalamar production config |
+| **full.kalamarProductionConf.content** | string | (default config) | Kalamar production configuration in Perl format |
 | **securityContext.runAsUser** | integer | `0` | Container user ID (0=root) |
 | **securityContext.runAsGroup** | integer | `0` | Container group ID |
 | **securityContext.fsGroup** | integer | `0` | Filesystem group ID |
@@ -294,14 +294,43 @@ This document provides a complete reference table for all configurable values in
 ### 13. Full Profile - Configuration
 
 **full.kalamarProductionConf.enabled** (boolean, default: `false`)
-- Enable custom production configuration file
+- Enable custom production configuration file for Kalamar
 - Full profile only
-- Allows advanced Kalamar configuration
+- Creates a ConfigMap mounted in the Kalamar pod
+- Configuration is in Perl format
 
-**full.kalamarProductionConf.content** (string, default: `""`)
-- Content of production configuration file
-- Format: Kalamar production configuration
-- Mounted as ConfigMap in full profile
+**full.kalamarProductionConf.content** (string, default: production settings)
+- Content of Kalamar production configuration file
+- Format: Perl hash with Kalamar, Auth, and CSP settings
+- Default provided includes:
+  - API endpoint configuration
+  - Plugin specifications
+  - OAuth2 authentication settings
+  - Content Security Policy (CSP) headers
+  - HTTPS enforcement
+- Example configuration:
+  ```perl
+  {
+    Kalamar => {
+      api_path => 'https://korap.ids-mannheim.de/api/',
+      api_version => '1.0',
+      https_only => 1,
+      plugins => ['Auth', 'KorAPXML2Krill', 'Tei2KorAPXML', 'Plugins']
+    },
+    'Kalamar-Auth' => {
+      oauth2 => 1
+    },
+    CSP => {
+      'default-src' => 'self',
+      'style-src' => ['self','unsafe-inline'],
+      'script-src' => ['self'],
+      'connect-src' => 'self',
+      'img-src' => ['self', 'data:']
+    }
+  }
+  ```
+- See [Kalamar Documentation](https://github.com/KorAP/Kalamar) for all available settings
+- Customize API endpoints, plugins, authentication, and security policies as needed
 
 ### 14. Security Configuration
 

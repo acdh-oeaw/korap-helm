@@ -54,7 +54,28 @@ full:
   superClientInfoPath: /kalamar/super_client_info
   kalamarProductionConf:
     enabled: false
-    content: ""
+    # Kalamar production configuration in Perl format
+    # See: https://github.com/KorAP/Kalamar
+    # Required format is a Perl hash configuration with API endpoint and plugin settings
+    content: |
+      {
+        Kalamar => {
+          api_path => 'https://korap.ids-mannheim.de/api/',
+          api_version => '1.0',
+          https_only => 1,
+          plugins => ['Auth', 'KorAPXML2Krill', 'Tei2KorAPXML', 'Plugins']
+        },
+        'Kalamar-Auth' => {
+          oauth2 => 1
+        },
+        CSP => {
+          'default-src' => 'self',
+          'style-src' => ['self','unsafe-inline'],
+          'script-src' => ['self'],
+          'connect-src' => 'self',
+          'img-src' => ['self', 'data:']
+        }
+      }
   dataVolume:
     enabled: false
     mountPath: /kalamar/data

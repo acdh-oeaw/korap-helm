@@ -5,6 +5,9 @@ metadata:
   name: {{ include "korap.fullname" . }}-kalamar-conf
   labels:
     {{- include "korap.labels" . | nindent 4 }}
+# Kalamar production configuration file
+# This file is mounted into the Kalamar pod to configure API endpoints,
+# plugins, authentication, and security policies (CSP)
 data:
   kalamar.production.conf: |
 {{ ((.Values.full | default dict).kalamarProductionConf | default dict).content | indent 4 }}
