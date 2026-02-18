@@ -49,11 +49,28 @@ ingress:
 
 full:
   enabled: false
+  # OAuth2 Super Client Configuration
+  # If superClientInfoSecretName is empty, a Secret will be auto-generated from the configuration below
+  # You can also provide your own pre-existing secret by setting superClientInfoSecretName
   superClientInfoSecretName: null
   superClientInfoKey: super_client_info
   superClientInfoPath: /kalamar/super_client_info
-  kalamarProductionConf:
-    enabled: false
+  
+  superClientInfo:
+    # Auto-generate OAuth2 super_client_info Secret with these values
+    # Leave empty/null to disable authentication
+    enabled: true
+    clientId: "korap-client"
+    clientSecret: "auto-generate"  # Set to "auto-generate" for secure random secret, or provide your own
+    clientName: "KorAP"
+    clientType: "CONFIDENTIAL"
+    clientDescription: "KorAP Kalamar Frontend"
+    clientUrl: "http://localhost:64543"
+    clientRedirectUri: "http://localhost:64543/oauth2/callback"
+    super: true
+    refreshTokenExpiry: 31536000
+    permitted: true
+  
     # Kalamar production configuration in Perl format
     # See: https://github.com/KorAP/Kalamar
     # Required format is a Perl hash configuration with API endpoint and plugin settings

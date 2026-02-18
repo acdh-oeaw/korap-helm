@@ -239,28 +239,78 @@ questions:
     description: "Enable enterprise features (authentication, plugins, data volumes)"
     group: "Full Profile Settings"
 
+  # OAuth2 Auto-Generation
+  - variable: full.superClientInfo.enabled
+    default: true
+    type: boolean
+    label: "Auto-Generate OAuth2 Credentials"
+    description: "Automatically create a production-ready OAuth client Secret (recommended: leave enabled)"
+    group: "Full Profile - OAuth2 Configuration"
+    show_if: "full.enabled=true"
+
+  - variable: full.superClientInfo.clientId
+    default: "korap-client"
+    type: string
+    label: "OAuth Client ID"
+    description: "Unique identifier for the OAuth client (e.g., korap-prod)"
+    group: "Full Profile - OAuth2 Configuration"
+    show_if: "full.enabled=true && full.superClientInfo.enabled=true"
+
+  - variable: full.superClientInfo.clientSecret
+    default: "auto-generate"
+    type: string
+    label: "OAuth Client Secret"
+    description: "Client secret for authentication. Use 'auto-generate' for secure random secret, or provide your own"
+    group: "Full Profile - OAuth2 Configuration"
+    show_if: "full.enabled=true && full.superClientInfo.enabled=true"
+
+  - variable: full.superClientInfo.clientName
+    default: "KorAP"
+    type: string
+    label: "OAuth Client Name"
+    description: "Display name of the OAuth client (shown during login)"
+    group: "Full Profile - OAuth2 Configuration"
+    show_if: "full.enabled=true && full.superClientInfo.enabled=true"
+
+  - variable: full.superClientInfo.clientRedirectUri
+    default: "http://localhost:64543/oauth2/callback"
+    type: string
+    label: "OAuth Redirect URI"
+    description: "Must match your Kalamar URL exactly (CRITICAL!). Example: https://korap.example.com/oauth2/callback"
+    group: "Full Profile - OAuth2 Configuration"
+    show_if: "full.enabled=true && full.superClientInfo.enabled=true"
+
+  - variable: full.superClientInfo.clientUrl
+    default: "http://localhost:64543"
+    type: string
+    label: "Client Application URL"
+    description: "URL of your Kalamar frontend (e.g., https://korap.example.com)"
+    group: "Full Profile - OAuth2 Configuration"
+    show_if: "full.enabled=true && full.superClientInfo.enabled=true"
+
+  # External OAuth Secret (advanced)
   - variable: full.superClientInfoSecretName
     default: ""
     type: string
-    label: "Super Client Info Secret Name"
-    description: "Kubernetes secret with OAuth credentials (enables Kalamar Auth plugin). Leave empty for no authentication. To create: kubectl create secret generic <name> --from-file=super_client_info=./super_client_info"
-    group: "Full Profile Settings"
+    label: "Use External OAuth Secret (Advanced)"
+    description: "Reference a pre-existing Kubernetes secret instead of auto-generating. Leave empty to use auto-generation"
+    group: "Full Profile - OAuth2 (Advanced)"
     show_if: "full.enabled=true"
 
   - variable: full.superClientInfoKey
     default: "super_client_info"
     type: string
-    label: "Super Client Info Key"
-    description: "Key in the secret containing the super_client_info data (usually 'super_client_info')"
-    group: "Full Profile Settings"
+    label: "OAuth Secret File Key"
+    description: "Key in the secret containing the OAuth data (usually 'super_client_info')"
+    group: "Full Profile - OAuth2 (Advanced)"
     show_if: "full.enabled=true"
 
   - variable: full.superClientInfoPath
     default: "/kalamar/super_client_info"
     type: string
-    label: "Super Client Info Mount Path"
-    description: "Path where super_client_info will be mounted in containers (do not change)"
-    group: "Full Profile Settings"
+    label: "OAuth Secret Mount Path"
+    description: "Internal path where OAuth config is mounted (do not change)"
+    group: "Full Profile - OAuth2 (Advanced)"
     show_if: "full.enabled=true"
 
   # Full Profile - Kalamar Data Volume

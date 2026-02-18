@@ -22,12 +22,15 @@ helm install korap ./korap --values values-dev.yaml
 ### 2. **Full Profile**
 Enterprise setup with authentication, plugins, and separate data volumes.
 
+**NEW**: OAuth2 credentials are **auto-generated** by default!
+
 **Services:**
-- `kalamar:latest` + Auth plugin support
+- `kalamar:latest` + Auth plugin (auto-enabled)
 - `kustvakt:latest-full` - Full version with LDAP/authentication
 - Data volumes for persistent storage
 - Initialization job for super_client_info setup
 - Optional production configuration
+- **Auto-generated OAuth Secret** with secure random credentials
 
 **Usage:**
 ```bash
@@ -35,8 +38,34 @@ helm install korap ./korap \
   --set full.enabled=true \
   --set kalamarFull.enabled=true \
   --set kustvaktFull.enabled=true \
-  --set 'full.dataVolume.enabled=true' \
-  --set 'full.superClientInfoSecretName=my-secret'
+  --set 'full.dataVolume.enabled=true'
+```
+
+**What happens automatically:**
+1. ✅ `super_client_info` Secret created with auth details
+2. ✅ Client secret = 32-character secure random string
+3. ✅ Kalamar Auth plugin enabled
+4. ✅ Login/OAuth functionality ready
+
+**Customize OAuth (optional):**
+```bash
+helm install korap ./korap \
+  --set full.enabled=true \
+  --set kalamarFull.enabled=true \
+  --set kustvaktFull.enabled=true \
+  --set 'full.superClientInfo.clientId=korap-prod' \
+  --set 'full.superClientInfo.clientRedirectUri=https://korap.example.com/oauth2/callback'
+```
+
+**Use external OAuth client (optional):**
+```bash
+kubectl create secret generic korap-oauth --from-file=super_client_info=./super_client_info -n korap
+
+helm install korap ./korap \
+  --set full.enabled=true \
+  --set kalamarFull.enabled=true \
+  --set kustvaktFull.enabled=true \
+  --set 'full.superClientInfoSecretName=korap-oauth'
 ```
 
 ### 3. **Example Profile**
@@ -103,91 +132,224 @@ restartPolicy: unless-stopped
 
 ### Overview
 
-The full profile supports OAuth2/LDAP authentication through Kustvakt backend. Authentication is **optional** and controlled via the `full.superClientInfoSecretName` setting.
+The full profile now **auto-generates OAuth2 credentials** by default! No manual secret creation needed.
 
-- **With Auth Secret**: Kalamar loads the Auth plugin and enables login via OAuth2/LDAP
-- **Without Auth Secret**: Full profile runs without Auth plugin; anonymous access only
+**NEW AUTO-GENERATION:**
+- ✅ OAuth Secret created automatically on deployment
+- ✅ Secure random client secret (32 characters)
+- ✅ Kalamar Auth plugin automatically enabled
+- ✅ All settings configurable via values
 
-### Setting Up Authentication
+**Legacy approach (still supported):**
+- Manually create secret and reference via `superClientInfoSecretName`
+- Useful if you want to manage OAuth credentials separately
 
-#### 1. Create super_client_info File
+### How Auto-Generation Works
 
-Create a JSON file with OAuth2 client credentials:
+1. **Secret Template Created**: `charts/korap/templates/super-client-info-secret.yaml`
+   - Generates Kubernetes Secret from configuration values
+   - Only created if `superClientInfo.enabled: true`
+   - Does NOT create if `superClientInfoSecretName` is specified (uses external)
 
+2. **Helper Function**: Template in `_helpers.tpl`
+   - Generates JSON from configuration values
+   - Handles `"auto-generate"` → 32-char random secret
+   - Validates/formats OAuth client fields
+
+3. **Deployment Integration**: `kalamar-full-deployment.yaml`
+   - Detects whether secret is auto-generated or external
+   - Sets `KALAMAR_PLUGINS=Auth` only if secret exists
+   - Mounts secret at `/kalamar/super_client_info`
+
+### Default Auto-Generated Configuration
+
+```yaml
+full:
+  superClientInfo:
+    enabled: true
+    clientId: "korap-client"
+    clientSecret: "auto-generate"          # 32-char random
+    clientName: "KorAP"
+    clientType: "CONFIDENTIAL"
+    clientDescription: "KorAP Kalamar Frontend"
+    clientUrl: "http://localhost:64543"
+    clientRedirectUri: "http://localhost:64543/oauth2/callback"
+    super: true
+    refreshTokenExpiry: 31536000           # 365 days
+    permitted: true
+```
+
+### Quick Start: Default Auto-Generated Auth
+
+```bash
+# OAuth credentials auto-generated with defaults
+helm install korap ./korap \
+  --namespace korap \
+  --set full.enabled=true \
+  --set kalamarFull.enabled=true \
+  --set kustvaktFull.enabled=true
+```
+
+**Result:**
+- ✅ OAuth Secret auto-created: `korap-korap-super-client-info`
+- ✅ Kalamar Auth plugin enabled
+- ✅ Login functionality ready
+- ✅ Client secret = random 32-character string
+
+### Customize Auto-Generated OAuth
+
+```bash
+# For production environment
+helm install korap ./korap \
+  --namespace korap \
+  --set full.enabled=true \
+  --set kalamarFull.enabled=true \
+  --set 'full.superClientInfo.clientId=korap-prod' \
+  --set 'full.superClientInfo.clientName=KorAP Production' \
+  --set 'full.superClientInfo.clientUrl=https://korap.example.com' \
+  --set 'full.superClientInfo.clientRedirectUri=https://korap.example.com/oauth2/callback' \
+  --set 'full.superClientInfo.clientSecret=my-custom-secret'
+```
+
+### View Generated OAuth Credentials
+
+```bash
+# See the auto-generated super_client_info JSON
+kubectl get secret korap-korap-super-client-info \
+  -o jsonpath='{.data.super_client_info}' \
+  -n korap | base64 -d
+```
+
+**Output:**
 ```json
 {
   "client_id": "korap-client",
-  "client_secret": "your-secret-key-here",
-  "scope": "read write",
-  "redirect_uri": "http://localhost:64543/oauth2/callback",
-  "response_type": "code",
-  "grant_type": "authorization_code"
+  "client_secret": "aBcDeFgHiJkLmNoPqRsTuVwXyZ123456",
+  "client_name": "KorAP",
+  "client_type": "CONFIDENTIAL",
+  "client_description": "KorAP Kalamar Frontend",
+  ...
 }
 ```
 
-See [Kustvakt Documentation](https://github.com/KorAP/Kustvakt/wiki) for all available options.
-
-#### 2. Create Kubernetes Secret
+### Update OAuth Configuration After Deployment
 
 ```bash
-kubectl create secret generic korap-super-client \
-  --from-file=super_client_info=./super_client_info \
+# Edit the Secret directly
+kubectl edit secret korap-korap-super-client-info -n korap
+
+# Or replace it with new values
+kubectl delete secret korap-korap-super-client-info -n korap
+helm upgrade korap ./korap \
+  --set 'full.superClientInfo.clientRedirectUri=https://newdomain.com/oauth2/callback' \
   -n korap
+
+# Restart Kalamar to load new credentials
+kubectl rollout restart deployment/korap-korap-kalamar-full -n korap
 ```
 
-#### 3. Deploy Full Profile with Auth
+### Disable Auto-Generation
+
+To run full profile WITHOUT authentication:
 
 ```bash
 helm install korap ./korap \
   --namespace korap \
   --set full.enabled=true \
   --set kalamarFull.enabled=true \
-  --set kustvaktFull.enabled=true \
-  --set 'full.superClientInfoSecretName=korap-super-client' \
-  --set 'full.dataVolume.enabled=true'
+  --set 'full.superClientInfo.enabled=false'
 ```
 
-**What This Does:**
-1. Mounts the secret into Kalamar at `/kalamar/super_client_info`
-2. Automatically enables the KALAMAR_PLUGINS=Auth environment variable
-3. Kalamar automatically detects the client file and activates OAuth
-4. Users see login button in frontend
+**Result:**
+- No OAuth secret created
+- Kalamar runs without Auth plugin
+- Anonymous access only
+- No login functionality
 
-### How It Works (Technical Details)
+### Use External OAuth Secret (Legacy)
 
-**Environment Variables Set:**
+If you prefer to manage OAuth credentials separately:
+
 ```bash
-KALAMAR_API=http://korap-korap-kustvakt-full:8089/api/
-KALAMAR_PLUGINS=Auth
-KALAMAR_CLIENT_FILE=/kalamar/super_client_info
+# 1. Create your super_client_info file
+cat > super_client_info <<EOF
+{
+  "client_id": "my-oauth-client",
+  "client_secret": "my-secure-secret",
+  ...
+}
+EOF
+
+# 2. Create Kubernetes secret
+kubectl create secret generic my-oauth-secret \
+  --from-file=super_client_info=./super_client_info \
+  -n korap
+
+# 3. Reference it in deployment (disables auto-generation)
+helm install korap ./korap \
+  --namespace korap \
+  --set full.enabled=true \
+  --set kalamarFull.enabled=true \
+  --set 'full.superClientInfoSecretName=my-oauth-secret'
 ```
 
-**Volume Mounts:**
-- Secret mounted as: `/kalamar/super_client_info`
-- Kalamar reads this file on startup
-- Auth plugin auto-loads when file is present
+**Note:** When `superClientInfoSecretName` is set, auto-generation is skipped.
 
-**Auth Plugin Disabled When:**
-- Secret is not referenced (superClientInfoSecretName is null)
-- Environment variables are not set
-- No client file is mounted
+### Technical Implementation
 
-This is **intentional** - allows full profile to work without authentication if needed.
+**Secret Generation Template:**
+- File: `charts/korap/templates/super-client-info-secret.yaml`
+- Conditions: Created if `superClientInfo.enabled=true` AND `superClientInfoSecretName=null`
+- Type: Kubernetes Secret (Opaque)
+- Key: `super_client_info` (base64-encoded JSON)
+
+**JSON Generation:**
+- File: `charts/korap/templates/_helpers.tpl`
+- Function: `korap.superClientInfo`
+- Handles `"auto-generate"` → random 32-char string
+- Validates all required OAuth fields
+
+**Environment Variables:**
+- Set only when Secret exists (auto-generated or external)
+- `KALAMAR_PLUGINS=Auth`
+- `KALAMAR_CLIENT_FILE=/kalamar/super_client_info`
 
 ### Troubleshooting Authentication
 
 **Symptom**: `Can't open file "/kalamar/super_client_info": No such file or directory`
 
 **Causes:**
-- `superClientInfoSecretName` is set but secret doesn't exist
-- Secret was not created
-- Wrong secret name referenced
-- Secret not in correct namespace
+- `super Client.enabled=false` (should be `true`)
+- Both `superClientInfo.enabled=false` AND `superClientInfoSecretName=null`
+- Secret not created due to error
 
 **Solution:**
 ```bash
-# Verify secret exists
-kubectl get secrets -n korap
+# Verify auto-generation is enabled
+helm get values korap -n korap | grep superClientInfo.enabled
+
+# Check if secret exists
+kubectl get secrets -n korap | grep super-client
+
+# If missing, recreate:
+helm upgrade korap ./korap \
+  --set 'full.superClientInfo.enabled=true' \
+  -n korap
+```
+
+**Symptom**: Auth plugin loads but OAuth fails
+
+**Solution:**
+1. Verify `clientRedirectUri` matches your Kalamar URL
+2. Check Kustvakt is running and accessible:
+   ```bash
+   kubectl exec deployment/korap-korap-kustvakt-full -n korap -- \
+     curl http://localhost:8089/api/
+   ```
+3. View Kalamar logs:
+   ```bash
+   kubectl logs deployment/korap-korap-kalamar-full | grep -i auth
+   ```
 
 # Check secret contents
 kubectl describe secret korap-super-client -n korap

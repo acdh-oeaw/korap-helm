@@ -19,22 +19,34 @@ Index Volume:
 
 {{ if and (.Values.full | default dict).enabled (.Values.kalamarFull | default dict).enabled }}
 AUTHENTICATION STATUS:
-{{- if (.Values.full | default dict).superClientInfoSecretName }}
-  ✅ Auth ENABLED
-  Secret: {{ (.Values.full | default dict).superClientInfoSecretName }}
-  Kalamar Auth plugin is loaded with OAuth2/LDAP support
+{{- $secretName := (.Values.full | default dict).superClientInfoSecretName }}
+{{- if not $secretName }}
+{{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).superClientInfo | default dict).enabled }}
+{{- $secretName = printf "%s-super-client-info" (include "korap.fullname" .) }}
+  ✅ OAuth ENABLED (Auto-Generated)
+  Secret: {{ $secretName }}
+  
+  View generated OAuth credentials:
+  kubectl get secret {{ $secretName }} -o jsonpath='{.data.super_client_info}' -n {{ .Release.Namespace }} | base64 -d
+  
+  Edit/update OAuth configuration:
+  kubectl edit secret {{ $secretName }} -n {{ .Release.Namespace }}
+  Then restart Kalamar: kubectl rollout restart deployment/{{ include "korap.fullname" . }}-kalamar-full -n {{ .Release.Namespace }}
 {{- else }}
-  ⚠️  Auth DISABLED (optional)
-  To enable authentication, create a super_client_info secret:
+  ⚠️  Auth DISABLED
+  To enable OAuth authentication, update the deployment:
   
-  1. Create super_client_info JSON file with OAuth credentials
-  2. Create secret: kubectl create secret generic korap-super-client \
-       --from-file=super_client_info=./super_client_info -n {{ .Release.Namespace }}
-  3. Update deployment: helm upgrade {{ .Release.Name }} ./korap \
-       --set 'full.superClientInfoSecretName=korap-super-client' \
-       -n {{ .Release.Namespace }}
+  helm upgrade {{ .Release.Name }} ./korap \
+    --set 'full.superClientInfo.enabled=true' \
+    -n {{ .Release.Namespace }}
+{{- end }}
+{{- else }}
+  ✅ OAuth ENABLED
+  Secret: {{ $secretName }} (External)
   
-  See README.md for detailed authentication setup instructions.
+  To update OAuth configuration, edit the secret:
+  kubectl edit secret {{ $secretName }} -n {{ .Release.Namespace }}
+  Then restart Kalamar: kubectl rollout restart deployment/{{ include "korap.fullname" . }}-kalamar-full -n {{ .Release.Namespace }}
 {{- end }}
 
 {{- end }}

@@ -32,7 +32,13 @@ spec:
           env:
             - name: KALAMAR_API
               value: 'http://{{ include "korap.fullname" . }}-kustvakt-full:{{ ((.Values.service | default dict).kustvakt | default dict).port }}/api/'
-            {{- if and (.Values.full | default dict).enabled (.Values.full | default dict).superClientInfoSecretName }}
+            {{- $secretName := (.Values.full | default dict).superClientInfoSecretName }}
+            {{- if not $secretName }}
+            {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).superClientInfo | default dict).enabled }}
+            {{- $secretName = printf "%s-super-client-info" (include "korap.fullname" .) }}
+            {{- end }}
+            {{- end }}
+            {{- if $secretName }}
             - name: KALAMAR_PLUGINS
               value: "Auth"
             - name: KALAMAR_CLIENT_FILE
@@ -70,7 +76,13 @@ spec:
               subPath: kalamar.production.conf
             {{- end }}
 
-            {{- if and (.Values.full | default dict).enabled (.Values.full | default dict).superClientInfoSecretName }}
+            {{- $secretName := (.Values.full | default dict).superClientInfoSecretName }}
+            {{- if not $secretName }}
+            {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).superClientInfo | default dict).enabled }}
+            {{- $secretName = printf "%s-super-client-info" (include "korap.fullname" .) }}
+            {{- end }}
+            {{- end }}
+            {{- if $secretName }}
             - name: super-client
               mountPath: "{{ (.Values.full | default dict).superClientInfoPath }}"
               subPath: "{{ (.Values.full | default dict).superClientInfoKey }}"
@@ -92,10 +104,16 @@ spec:
             name: {{ include "korap.fullname" . }}-kalamar-conf
         {{- end }}
 
-        {{- if and (.Values.full | default dict).enabled (.Values.full | default dict).superClientInfoSecretName }}
+        {{- $secretName := (.Values.full | default dict).superClientInfoSecretName }}
+        {{- if not $secretName }}
+        {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).superClientInfo | default dict).enabled }}
+        {{- $secretName = printf "%s-super-client-info" (include "korap.fullname" .) }}
+        {{- end }}
+        {{- end }}
+        {{- if $secretName }}
         - name: super-client
           secret:
-            secretName: {{ (.Values.full | default dict).superClientInfoSecretName }}
+            secretName: {{ $secretName }}
         {{- end }}
 
         {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).dataVolume | default dict).enabled }}
