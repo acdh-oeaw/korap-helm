@@ -1,17 +1,12 @@
 {{- if .Values.exampleIndex.enabled }}
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: {{ include "korap.fullname" . }}-example-index
   labels:
     {{- include "korap.labels" . | nindent 4 }}
     app: example-index
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: example-index
-      release: {{ .Release.Name }}
   template:
     metadata:
       labels:
@@ -22,7 +17,7 @@ spec:
       securityContext:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      restartPolicy: Always
+      restartPolicy: Never
       containers:
         - name: example-index
           image: "{{ (.Values.exampleIndex | default dict).image }}"
