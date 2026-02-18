@@ -407,6 +407,36 @@ This will:
 2. Automatically enable the Kalamar Auth plugin
 3. Enable OAuth2 authentication in the frontend
 
+### Using Keycloak / OIDC instead of bundling OAuth credentials
+
+If you operate a Keycloak (or other OIDC) provider you can configure Kalamar to use it directly. Use the `full.keycloak` values block for issuer and client credentials.
+
+1) Create Secret for client secret (recommended):
+
+```bash
+kubectl create secret generic korap-keycloak-client-secret \
+  --from-literal=client-secret='VERY_SECRET' -n korap
+```
+
+2) Enable Keycloak in Helm:
+
+```bash
+helm upgrade --install korap ./korap \
+  --namespace korap \
+  --set full.enabled=true \
+  --set kalamarFull.enabled=true \
+  --set 'full.keycloak.enabled=true' \
+  --set 'full.keycloak.issuer=https://auth.example.com/realms/korap' \
+  --set 'full.keycloak.clientId=korap-client' \
+  --set 'full.keycloak.clientSecretSecretName=korap-keycloak-client-secret'
+```
+
+3) In Keycloak configure the client redirect URI to match `full.superClientInfo.clientRedirectUri` (e.g. `https://korap.example.com/oauth2/callback`).
+
+Notes:
+- `full.keycloak.clientSecretSecretName` keeps secrets out of `values.yaml` (recommended).
+- You may supply explicit OIDC endpoint URLs (`authUrl`, `tokenUrl`, `userinfoUrl`, `jwksUri`) if discovery is not available.
+
 ### Updating Authentication Credentials
 
 To update the OAuth credentials:

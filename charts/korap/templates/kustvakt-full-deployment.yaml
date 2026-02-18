@@ -37,6 +37,10 @@ spec:
             {{- with (.Values.kustvaktFull | default dict).extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+            {{- if and (.Values.full | default dict).enabled (.Values.full.kustvaktLdap.enabled) }}
+            - name: KUSTVAKT_LDAP_CONF
+              value: "/kustvakt/ldap/ldap.conf"
+            {{- end }}
 
           volumeMounts:
             - name: index
@@ -45,6 +49,15 @@ spec:
             {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).kustvaktDataVolume | default dict).enabled }}
             - name: data
               mountPath: "{{ ((.Values.full | default dict).kustvaktDataVolume | default dict).mountPath }}"
+            {{- end }}
+
+            {{- if and (.Values.full | default dict).enabled (.Values.full.kustvaktLdap.enabled) }}
+            - name: kustvakt-ldap-config
+              mountPath: /kustvakt/ldap
+              readOnly: true
+            - name: kustvakt-ldap-secret
+              mountPath: /kustvakt/ldap/secret
+              readOnly: true
             {{- end }}
 
       volumes:
@@ -56,6 +69,21 @@ spec:
         - name: data
           persistentVolumeClaim:
             claimName: {{ if ((.Values.full | default dict).kustvaktDataVolume | default dict).existingClaim }}{{ ((.Values.full | default dict).kustvaktDataVolume | default dict).existingClaim }}{{ else }}{{ include "korap.fullname" . }}-kustvakt-data{{ end }}
+        {{- end }}
+
+        {{- if and (.Values.full | default dict).enabled (.Values.full.kustvaktLdap.enabled) }}
+        - name: kustvakt-ldap-config
+          configMap:
+            name: {{ include "korap.fullname" . }}-kustvakt-ldap-config
+        {{- if .Values.full.kustvaktLdap.passwordSecret }}
+        - name: kustvakt-ldap-secret
+          secret:
+            secretName: {{ .Values.full.kustvaktLdap.passwordSecret }}
+        {{- else if .Values.full.kustvaktLdap.password }}
+        - name: kustvakt-ldap-secret
+          secret:
+            secretName: {{ include "korap.fullname" . }}-kustvakt-ldap-secret
+        {{- end }}
         {{- end }}
 
 ---

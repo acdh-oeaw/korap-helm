@@ -71,6 +71,8 @@ full:
     refreshTokenExpiry: 31536000
     permitted: true
   
+  kalamarProductionConf:
+    enabled: false
     # Kalamar production configuration in Perl format
     # See: https://github.com/KorAP/Kalamar
     # Required format is a Perl hash configuration with API endpoint and plugin settings
@@ -93,6 +95,50 @@ full:
           'img-src' => ['self', 'data:']
         }
       }
+
+  # LDAP Configuration for Kustvakt (Full Profile)
+  kustvaktLdap:
+    enabled: false
+    # LDAP Server Details
+    host: "ldap.example.com"
+    port: 389
+    useSSL: false
+    useStartTLS: false
+    
+    # LDAP Search Configuration
+    searchBase: "ou=users,dc=example,dc=com"
+    searchFilter: "uid=${login}"
+    
+    # LDAP Admin Credentials
+    sLoginDN: "cn=admin,dc=example,dc=com"
+    # Password stored separately in secret
+    passwordSecret: null          # Kubernetes secret name containing LDAP password
+    password: null                # Optional: plain password to auto-create a Secret (not recommended in production)
+    passwordKey: "password"       # Key in secret containing the password
+    
+    # Optional LDAP Settings
+    emailAttribute: "mail"
+    authFilter: "(uid=${login})"
+    userNotBlockedFilter: null
+    ldapTimeout: 9000
+    trustStore: null
+  # Keycloak / OpenID Connect provider configuration for Kalamar (Full Profile)
+  keycloak:
+    enabled: false
+    # Issuer / base URL of Keycloak (e.g. https://auth.example.com/realms/<realm>)
+    issuer: "https://auth.example.com/realms/example"
+    authUrl: null
+    tokenUrl: null
+    userinfoUrl: null
+    jwksUri: null
+
+    # Client credentials used by Kalamar to authenticate (preferred: provide secret via Kubernetes Secret)
+    clientId: "korap-client"
+    # Provide either `clientSecret` (insecure in values) or `clientSecretSecretName` to reference an existing Secret
+    clientSecretSecretName: null
+    clientSecretKey: "client-secret"
+    clientSecret: null
+    
   dataVolume:
     enabled: false
     mountPath: /kalamar/data
