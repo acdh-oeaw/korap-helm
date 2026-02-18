@@ -1,0 +1,24 @@
+{{- if and .Values.kustvaktFull.enabled (.Values.full.kustvaktLdap.enabled) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "korap.fullname" . }}-kustvakt-ldap-config
+  labels:
+    {{- include "korap.labels" . | nindent 4 }}
+    variant: full
+data:
+  ldap.conf: |
+    # Kustvakt LDAP configuration generated from Helm values
+    host={{ .Values.full.kustvaktLdap.host }}
+    port={{ .Values.full.kustvaktLdap.port }}
+    useSSL={{ .Values.full.kustvaktLdap.useSSL }}
+    useStartTLS={{ .Values.full.kustvaktLdap.useStartTLS }}
+    searchBase={{ .Values.full.kustvaktLdap.searchBase }}
+    searchFilter={{ .Values.full.kustvaktLdap.searchFilter }}
+    bindDN={{ .Values.full.kustvaktLdap.sLoginDN }}
+    emailAttribute={{ .Values.full.kustvaktLdap.emailAttribute | default "mail" }}
+    authFilter={{ .Values.full.kustvaktLdap.authFilter }}
+    userNotBlockedFilter={{ .Values.full.kustvaktLdap.userNotBlockedFilter | default "" }}
+    ldapTimeout={{ .Values.full.kustvaktLdap.ldapTimeout }}
+    trustStore={{ .Values.full.kustvaktLdap.trustStore | default "" }}
+{{- end }}

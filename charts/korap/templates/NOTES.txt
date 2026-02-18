@@ -53,6 +53,29 @@ AUTHENTICATION STATUS:
 
 NEXT STEPS:
 
+{{- if and (.Values.full | default dict).enabled (.Values.kalamarFull | default dict).enabled }}
+ADDITIONAL AUTH INFO:
+{{- if .Values.full.keycloak.enabled }}
+KEYCLOAK (OIDC) configured:
+  Issuer: {{ .Values.full.keycloak.issuer }}
+  Client ID: {{ .Values.full.keycloak.clientId }}
+  Client secret: {{- if .Values.full.keycloak.clientSecretSecretName }}from Secret '{{ .Values.full.keycloak.clientSecretSecretName }}' (key '{{ .Values.full.keycloak.clientSecretKey }}'){{- else }}provided in values (insecure){{- end }}
+  Ensure Keycloak client redirect URI matches `full.superClientInfo.clientRedirectUri`
+{{- end }}
+
+{{- if .Values.full.kustvaktLdap.enabled }}
+KUSTVAKT LDAP configured:
+  Host: {{ .Values.full.kustvaktLdap.host }}:{{ .Values.full.kustvaktLdap.port }}
+  Search Base: {{ .Values.full.kustvaktLdap.searchBase }}
+  Bind DN: {{ .Values.full.kustvaktLdap.sLoginDN }}
+  Password: {{- if .Values.full.kustvaktLdap.passwordSecret }}from Secret '{{ .Values.full.kustvaktLdap.passwordSecret }}' (key '{{ .Values.full.kustvaktLdap.passwordKey }}'){{- else if .Values.full.kustvaktLdap.password }}auto-created Secret '{{ include "korap.fullname" . }}-kustvakt-ldap-secret'{{- else }}not configured{{- end }}
+
+  To view LDAP configuration inside pod:
+  kubectl exec -it deployment/{{ include "korap.fullname" . }}-kustvakt-full -n {{ .Release.Namespace }} -- cat /kustvakt/ldap/ldap.conf
+  To list mounted secret: kubectl exec -it deployment/{{ include "korap.fullname" . }}-kustvakt-full -n {{ .Release.Namespace }} -- ls /kustvakt/ldap/secret
+{{- end }}
+{{- end }}
+
 1. Access Kalamar:
    kubectl port-forward svc/{{ include "korap.fullname" . }}-kalamar {{ ((.Values.service | default dict).kalamar | default dict).port }}:{{ ((.Values.service | default dict).kalamar | default dict).port }} -n {{ .Release.Namespace }}
    Then open: http://localhost:{{ ((.Values.service | default dict).kalamar | default dict).port }}

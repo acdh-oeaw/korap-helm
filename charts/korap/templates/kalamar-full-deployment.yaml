@@ -32,6 +32,40 @@ spec:
           env:
             - name: KALAMAR_API
               value: 'http://{{ include "korap.fullname" . }}-kustvakt-full:{{ ((.Values.service | default dict).kustvakt | default dict).port }}/api/'
+            {{- if and (.Values.full | default dict).enabled (.Values.full.keycloak.enabled) }}
+            - name: KALAMAR_PLUGINS
+              value: "Auth"
+            - name: KALAMAR_OIDC_ISSUER
+              value: "{{ .Values.full.keycloak.issuer }}"
+            {{- if .Values.full.keycloak.authUrl }}
+            - name: KALAMAR_OIDC_AUTH_URL
+              value: "{{ .Values.full.keycloak.authUrl }}"
+            {{- end }}
+            {{- if .Values.full.keycloak.tokenUrl }}
+            - name: KALAMAR_OIDC_TOKEN_URL
+              value: "{{ .Values.full.keycloak.tokenUrl }}"
+            {{- end }}
+            {{- if .Values.full.keycloak.userinfoUrl }}
+            - name: KALAMAR_OIDC_USERINFO_URL
+              value: "{{ .Values.full.keycloak.userinfoUrl }}"
+            {{- end }}
+            {{- if .Values.full.keycloak.jwksUri }}
+            - name: KALAMAR_OIDC_JWKS_URI
+              value: "{{ .Values.full.keycloak.jwksUri }}"
+            {{- end }}
+            - name: KALAMAR_OIDC_CLIENT_ID
+              value: "{{ .Values.full.keycloak.clientId }}"
+            {{- if .Values.full.keycloak.clientSecretSecretName }}
+            - name: KALAMAR_OIDC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.full.keycloak.clientSecretSecretName }}
+                  key: {{ .Values.full.keycloak.clientSecretKey }}
+            {{- else if .Values.full.keycloak.clientSecret }}
+            - name: KALAMAR_OIDC_CLIENT_SECRET
+              value: "{{ .Values.full.keycloak.clientSecret }}"
+            {{- end }}
+            {{- end }}
             {{- $secretName := (.Values.full | default dict).superClientInfoSecretName }}
             {{- if not $secretName }}
             {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).superClientInfo | default dict).enabled }}
