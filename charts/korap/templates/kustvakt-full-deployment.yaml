@@ -34,6 +34,45 @@ spec:
               containerPort: {{ ((.Values.service | default dict).kustvakt | default dict).port }}
 
           env:
+            {{- if (.Values.keycloak | default dict).enabled }}
+            {{- if (.Values.keycloak | default dict).authUrl }}
+            - name: KC_AUTH_URL
+              value: "{{ (.Values.keycloak | default dict).authUrl }}"
+            {{- end }}
+            {{- if (.Values.keycloak | default dict).clientId }}
+            - name: KC_CLIENT_ID
+              value: "{{ (.Values.keycloak | default dict).clientId }}"
+            {{- end }}
+            {{- if (.Values.keycloak | default dict).issuer }}
+            - name: KC_ISSUER
+              value: "{{ (.Values.keycloak | default dict).issuer }}"
+            {{- end }}
+            {{- if (.Values.keycloak | default dict).jwksUri }}
+            - name: KC_JWKS_URI
+              value: "{{ (.Values.keycloak | default dict).jwksUri }}"
+            {{- end }}
+            {{- if (.Values.keycloak | default dict).tokenUrl }}
+            - name: KC_TOKEN_URL
+              value: "{{ (.Values.keycloak | default dict).tokenUrl }}"
+            {{- end }}
+            {{- if (.Values.keycloak | default dict).userinfoUrl }}
+            - name: KC_USERINFO_URL
+              value: "{{ (.Values.keycloak | default dict).userinfoUrl }}"
+            {{- end }}
+            {{- $secretName := (.Values.keycloak | default dict).clientSecretSecretName }}
+            {{- if not $secretName }}
+            {{- if and (.Values.keycloak | default dict).enabled (.Values.keycloak | default dict).clientSecret }}
+            {{- $secretName = printf "%s-keycloak-client-secret" (include "korap.fullname" .) }}
+            {{- end }}
+            {{- end }}
+            {{- if $secretName }}
+            - name: KC_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $secretName }}
+                  key: {{ (.Values.keycloak | default dict).clientSecretKey | default "client-secret" }}
+            {{- end }}
+            {{- end }}
             {{- with (.Values.kustvaktFull | default dict).extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}

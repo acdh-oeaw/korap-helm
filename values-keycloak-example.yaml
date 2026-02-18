@@ -1,0 +1,223 @@
+# KorAP Helm Chart - Keycloak Integration Example
+# 
+# This example shows how to configure the KorAP chart to use Keycloak for authentication
+# 
+# Usage:
+#   helm install korap ./korap \
+#     --values values-keycloak-example.yaml \
+#     --set keycloak.clientSecret='YOUR_ACTUAL_SECRET_HERE'
+
+profile: full
+
+# Enable full features
+full:
+  enabled: true
+  
+  # Production configuration for Kalamar
+  kalamarProductionConf:
+    enabled: false
+    # Kalamar production configuration in Perl format
+    # See: https://github.com/KorAP/Kalamar
+    content: |
+      {
+        Kalamar => {
+          api_path => 'https://korap.ids-mannheim.de/api/',
+          api_version => '1.0',
+          https_only => 1,
+          plugins => ['Auth', 'KorAPXML2Krill', 'Tei2KorAPXML', 'Plugins']
+        },
+        'Kalamar-Auth' => {
+          oauth2 => 1
+        },
+        CSP => {
+          'default-src' => 'self',
+          'style-src' => ['self','unsafe-inline'],
+          'script-src' => ['self'],
+          'connect-src' => 'self',
+          'img-src' => ['self', 'data:']
+        }
+      }
+  
+  # Data volumes for persistent storage
+  dataVolume:
+    enabled: false
+    mountPath: /kalamar/data
+    size: 50Gi
+    storageClassName: null
+    existingClaim: null
+  
+  kustvaktDataVolume:
+    enabled: false
+    mountPath: /kustvakt/data
+    size: 50Gi
+    storageClassName: null
+    existingClaim: null
+  
+  # OAuth2 Super Client Configuration (used with internal OAuth2)
+  superClientInfo:
+    enabled: false
+    clientId: korap-client
+    clientSecret: auto-generate
+    clientName: KorAP
+    clientType: CONFIDENTIAL
+    clientDescription: KorAP Kalamar Frontend
+    clientUrl: http://localhost:64543
+    clientRedirectUri: http://localhost:64543/oauth2/callback
+    super: true
+    refreshTokenExpiry: 31536000
+    permitted: true
+  
+  superClientInfoSecretName: null
+  superClientInfoKey: super_client_info
+  superClientInfoPath: /kalamar/super_client_info
+  
+  # LDAP Configuration (optional, if you need LDAP authentication)
+  kustvaktLdap:
+    enabled: false
+    host: ldap.example.com
+    port: 389
+    useSSL: false
+    useStartTLS: false
+    sLoginDN: cn=admin,dc=example,dc=com
+    password: null
+    passwordKey: password
+    passwordSecret: null
+    searchBase: ou=users,dc=example,dc=com
+    searchFilter: uid=${login}
+    authFilter: (uid=${login})
+    emailAttribute: mail
+    ldapTimeout: 9000
+    trustStore: null
+    userNotBlockedFilter: null
+
+# Enable Kalamar with authentication plugin
+kalamarFull:
+  enabled: true
+  image: korap/kalamar:latest
+  replicaCount: 1
+  extraEnv: []
+
+# Enable Kustvakt full version with LDAP/authentication support
+kustvaktFull:
+  enabled: true
+  image: korap/kustvakt:latest-full
+  extraEnv: []
+
+# ============================================================================
+# KEYCLOAK CONFIGURATION
+# ============================================================================
+keycloak:
+  # Enable Keycloak authentication
+  enabled: true
+  
+  # Keycloak realm base URL
+  # This is typically <your-keycloak-server>/realms/<realm-name>
+  authUrl: https://auth.example.com/realms/korap
+  
+  # Keycloak token endpoint
+  # This is used to exchange authorization code for tokens
+  tokenUrl: https://auth.example.com/realms/korap/protocol/openid-connect/token
+  
+  # Keycloak userinfo endpoint
+  # This is used to fetch user information
+  userinfoUrl: https://auth.example.com/realms/korap/protocol/openid-connect/userinfo
+  
+  # OpenID Connect token issuer identifier
+  issuer: https://auth.example.com/realms/korap
+  
+  # JWKS URI for verifying tokens
+  # Usually <your-keycloak-server>/realms/<realm-name>/protocol/openid-connect/certs
+  jwksUri: https://auth.example.com/realms/korap/protocol/openid-connect/certs
+  
+  # OAuth2 Client ID (must be registered in Keycloak)
+  clientId: korap
+  
+  # OAuth2 Client Secret (get this from Keycloak client settings)
+  # IMPORTANT: Do NOT commit this to git! Use secrets management instead
+  # Set via command line:
+  #   --set keycloak.clientSecret="YOUR_SECRET_HERE"
+  # Or use an existing Kubernetes secret:
+  #   --set keycloak.clientSecretSecretName="your-existing-secret"
+  clientSecret: null
+  
+  # The key name in the Kubernetes secret where clientSecret is stored
+  clientSecretKey: client-secret
+  
+  # If you already have a Kubernetes secret with the client secret, reference it here:
+  # clientSecretSecretName: korap-keycloak-client-secret
+  clientSecretSecretName: null
+
+# ============================================================================
+# VOLUME CONFIGURATION
+# ============================================================================
+indexVolume:
+  size: 10Gi
+  storageClassName: null
+  existingClaim: null
+
+# ============================================================================
+# INGRESS CONFIGURATION
+# ============================================================================
+# Optional: Enable Ingress for external access
+ingress:
+  enabled: false
+  className: nginx
+  annotations:
+    acme.cert-manager.io/http01-edit-in-place: 'true'
+    cert-manager.io/cluster-issuer: acdh-prod
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/proxy-body-size: 50m
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+  hosts:
+    - host: korap.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - hosts:
+        - korap.example.com
+      secretName: korap-tls
+
+# ============================================================================
+# EXAMPLE INDEX (Optional)
+# ============================================================================
+# Enable to deploy an example corpus index for testing
+exampleIndex:
+  enabled: false
+  image: korap/example-index:0.1
+
+# ============================================================================
+# SERVICE CONFIGURATION
+# ============================================================================
+service:
+  kalamar:
+    port: 64543
+    type: ClusterIP
+  kustvakt:
+    port: 8089
+    type: ClusterIP
+
+# ============================================================================
+# IMAGE CONFIGURATION
+# ============================================================================
+global:
+  imagePullPolicy: IfNotPresent
+
+kalamar:
+  image: korap/kalamar:latest
+  replicaCount: 1
+  extraEnv: []
+
+kustvakt:
+  image: korap/kustvakt:latest
+  extraEnv: []
+
+# ============================================================================
+# SECURITY AND RUNTIME
+# ============================================================================
+restartPolicy: Always
+
+securityContext:
+  runAsUser: 0
+  runAsGroup: 0
+  fsGroup: 0

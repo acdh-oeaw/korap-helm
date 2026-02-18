@@ -41,6 +41,12 @@ This chart provides flexible, profile-based deployments supporting lite and full
 - Environment variable support for custom configuration
 - Production configuration file support (full profile)
 
+✅ **Authentication Options**
+- **Internal OAuth2** - Auto-generated super_client_info or custom configuration
+- **Keycloak/OpenID Connect** - Full Keycloak integration with OIDC discovery
+- **LDAP** - LDAP directory authentication support
+- All authentication methods are optional and can be combined
+
 ---
 
 ## 📦 Chart Structure
@@ -48,9 +54,12 @@ This chart provides flexible, profile-based deployments supporting lite and full
 ```
 korap-helm/
 ├── Chart.yaml
-├── values.yaml
 ├── README.md
 ├── IMPLEMENTATION.md
+├── KEYCLOAK_SETUP.md
+├── LICENSE
+├── RANCHER_INTEGRATION.md
+├── values-keycloak-example.yaml
 └── charts/korap/
     ├── Chart.yaml
     ├── values.yaml
@@ -64,11 +73,14 @@ korap-helm/
     │   ├── kustvakt-full-deployment.yaml
     │   ├── example-index-deployment.yaml
     │   ├── full-init-job.yaml
+    │   ├── ingress.yaml
+    │   ├── keycloak-secret.yaml
+    │   ├── super-client-info-secret.yaml
     │   ├── pvc-index.yaml
     │   ├── pvc-data.yaml
     │   ├── pvc-kustvakt-data.yaml
-    │   ├── ingress.yaml
-    │   └── NOTES.txt
+    │   ├── NOTES.txt
+    │   └── _helpers.tpl
 ```
 
 ---
@@ -338,11 +350,47 @@ Then access: `https://korap.example.com`
 
 ## � Authentication & Authorization
 
-### Full Profile Auth Setup
+This chart supports multiple authentication methods:
 
-The full profile supports OAuth2/LDAP authentication via Kustvakt. Authentication requires a `super_client_info` file containing OAuth client configuration.
+### 1. Keycloak/OpenID Connect (Recommended for External Auth)
 
-### Creating the super_client_info File
+For enterprise environments with existing Keycloak infrastructure:
+
+```bash
+helm install korap ./korap \
+  --set keycloak.enabled=true \
+  --set keycloak.authUrl="https://your-keycloak.com/realms/korap" \
+  --set keycloak.tokenUrl="https://your-keycloak.com/realms/korap/protocol/openid-connect/token" \
+  --set keycloak.issuer="https://your-keycloak.com/realms/korap" \
+  --set keycloak.jwksUri="https://your-keycloak.com/realms/korap/protocol/openid-connect/certs" \
+  --set keycloak.clientId="korap" \
+  --set keycloak.clientSecret="YOUR-SECRET-HERE" \
+  -n korap
+```
+
+**See [KEYCLOAK_SETUP.md](KEYCLOAK_SETUP.md) for complete setup instructions and [values-keycloak-example.yaml](values-keycloak-example.yaml) for reference configuration.**
+
+### 2. Internal OAuth2 (super_client_info)
+
+For self-managed OAuth2 without external provider:
+
+#### Auto-Generated Credentials (Simplest)
+
+```bash
+helm install korap ./korap \
+  --namespace korap \
+  --set full.enabled=true \
+  --set kalamarFull.enabled=true \
+  --set kustvaktFull.enabled=true \
+  --set 'full.superClientInfo.enabled=true'
+```
+
+**What happens automatically:**
+- ✅ OAuth2 `super_client_info` Secret is auto-generated with secure defaults
+- ✅ Client secret is 32-character random string
+- ✅ Kalamar Auth plugin is automatically enabled
+
+#### Custom OAuth Configuration
 
 The `super_client_info` file is a JSON file containing OAuth2 client credentials and Kustvakt configuration:
 
@@ -357,23 +405,26 @@ The `super_client_info` file is a JSON file containing OAuth2 client credentials
 }
 ```
 
-**Or with more advanced settings:**
+Create a Kubernetes secret from your super_client_info file:
 
-```json
-{
-  "client_id": "korap-client",
-  "client_secret": "your-secret-key",
-  "api_token": "optional-api-token",
-  "host": "kustvakt-full:8089",
-  "version": "1.0"
-}
+```bash
+# Create secret from file
+kubectl create secret generic korap-super-client \
+  --from-file=super_client_info=./super_client_info \
+  -n korap
+
+# Reference it in deployment
+helm install korap ./korap \
+  --namespace korap \
+  --set full.enabled=true \
+  --set kalamarFull.enabled=true \
+  --set kustvaktFull.enabled=true \
+  --set 'full.superClientInfoSecretName=korap-super-client'
 ```
 
-See [Kustvakt Documentation](https://github.com/KorAP/Kustvakt) for full configuration options.
+### 3. LDAP Authentication
 
-### Creating the Kubernetes Secret
-
-Once you have your `super_client_info` file, create a Kubernetes secret:
+For LDAP directory integration:
 
 ```bash
 # Create secret from file
@@ -388,54 +439,36 @@ kubectl describe secret korap-super-client -n korap
 kubectl get secret korap-super-client -o jsonpath='{.data.super_client_info}' -n korap | base64 -d
 ```
 
-### Enabling Auth in Full Profile
+### 3. LDAP Authentication
 
-Reference the secret in your Helm deployment:
+For LDAP directory integration:
 
 ```bash
-helm upgrade korap ./korap \
+helm install korap ./korap \
+  --namespace korap \
+  --set full.enabled=true \
+  --set kustvaktFull.enabled=true \
+  --set 'full.kustvaktLdap.enabled=true' \
+  --set 'full.kustvaktLdap.host=ldap.example.com' \
+  --set 'full.kustvaktLdap.port=389' \
+  --set 'full.kustvaktLdap.searchBase=ou=users,dc=example,dc=com' \
+  --set 'full.kustvaktLdap.sLoginDN=cn=admin,dc=example,dc=com' \
+  --set 'full.kustvaktLdap.password=YOUR-LDAP-PASSWORD'
+```
+
+See the [values-keycloak-example.yaml](values-keycloak-example.yaml) file for complete LDAP configuration options.
+
+### No Authentication (Disabled)
+
+To run the full profile without any authentication:
+
+```bash
+helm install korap ./korap \
   --namespace korap \
   --set full.enabled=true \
   --set kalamarFull.enabled=true \
   --set kustvaktFull.enabled=true \
-  --set 'full.superClientInfoSecretName=korap-super-client' \
-  --install
-```
-
-This will:
-1. Mount the secret into Kalamar full at `/kalamar/super_client_info`
-2. Automatically enable the Kalamar Auth plugin
-3. Enable OAuth2 authentication in the frontend
-
-### Updating Authentication Credentials
-
-To update the OAuth credentials:
-
-```bash
-# Delete old secret
-kubectl delete secret korap-super-client -n korap
-
-# Create new secret with updated credentials
-kubectl create secret generic korap-super-client \
-  --from-file=super_client_info=./super_client_info \
-  -n korap
-
-# Restart Kalamar pod to reload credentials
-kubectl rollout restart deployment korap-korap-kalamar-full -n korap
-```
-
-### Disabling Authentication
-
-If you want to run full profile without authentication:
-
-```bash
-# Simply don't set superClientInfoSecretName
-helm upgrade korap ./korap \
-  --namespace korap \
-  --set full.enabled=true \
-  --set kalamarFull.enabled=true \
-  --set kustvaktFull.enabled=true \
-  --install
+  --set 'full.superClientInfo.enabled=false'
 ```
 
 Kalamar will run without the Auth plugin and allow anonymous access.
@@ -473,3 +506,34 @@ spec:
   resources:
     requests:
       storage: 20Gi
+EOF
+```
+
+---
+
+## 📖 Documentation
+
+This repository includes comprehensive documentation for various deployment scenarios:
+
+| File | Purpose |
+|------|---------|
+| [README.md](README.md) | This file - Overview and quick start (you are here) |
+| [IMPLEMENTATION.md](IMPLEMENTATION.md) | Complete feature documentation and technical details |
+| [KEYCLOAK_SETUP.md](KEYCLOAK_SETUP.md) | Keycloak integration setup guide with step-by-step instructions |
+| [values-keycloak-example.yaml](values-keycloak-example.yaml) | Complete example values file with Keycloak configuration |
+| [RANCHER_INTEGRATION.md](RANCHER_INTEGRATION.md) | Integration with Rancher for additional management features |
+
+---
+
+## 🔗 Quick Links
+
+- **GitHub**: [KorAP](https://github.com/KorAP)
+- **Kalamar**: [Frontend Repository](https://github.com/KorAP/Kalamar)
+- **Kustvakt**: [Backend Repository](https://github.com/KorAP/Kustvakt)
+- **Krill**: [Index Backend](https://github.com/KorAP/Krill)
+
+---
+
+## 📝 License
+
+This Helm chart is licensed under the Apache License 2.0. See [LICENSE](LICENSE) file for details.

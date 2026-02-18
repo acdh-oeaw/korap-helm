@@ -31,6 +31,18 @@ kustvaktFull:
   image: korap/kustvakt:latest-full
   extraEnv: []
 
+keycloak:
+  enabled: false
+  authUrl: null
+  clientId: null
+  clientSecret: null
+  clientSecretKey: client-secret
+  clientSecretSecretName: null
+  issuer: null
+  jwksUri: null
+  tokenUrl: null
+  userinfoUrl: null
+
 exampleIndex:
   enabled: false
   image: korap/example-index:0.1
