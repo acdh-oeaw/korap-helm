@@ -334,6 +334,8 @@ helm upgrade korap ./korap \
 
 Then access: `https://korap.example.com`
 
+Note: by default the Ingress routes to the Kalamar service. When you enable the full profile with `kalamarFull.enabled=true` the chart's `ingress.yaml` automatically points the backend to the `-kalamar-full` service instead of `-kalamar`, so you do not need to change the Ingress manually.
+
 ---
 
 ## � Authentication & Authorization

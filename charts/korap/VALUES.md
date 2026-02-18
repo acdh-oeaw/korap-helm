@@ -230,6 +230,10 @@ This document provides a complete reference table for all configurable values in
 - TLS/SSL configuration
 - Requires cert-manager typically
 - Format:
+ 
+**Hinweis zum Ingress bei Full-Profile:**
+- Wenn `full.enabled=true` und `kalamarFull.enabled=true` gesetzt sind, passt das Chart das Ingress-Backend automatisch an und routet auf den Service `{{ include "korap.fullname" . }}-kalamar-full`.
+- In diesem Fall ist keine manuelle Anpassung der Ingress-Backend-Service-Namen notwendig.
   ```yaml
   - secretName: korap-tls
     hosts:
