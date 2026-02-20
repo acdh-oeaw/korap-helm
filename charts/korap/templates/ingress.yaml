@@ -3,7 +3,6 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: {{ include "korap.fullname" . }}
-
   {{- with (.Values.ingress | default dict).annotations }}
   annotations:
     {{- toYaml . | nindent 4 }}
@@ -15,13 +14,29 @@ spec:
   {{- end }}
 
   rules:
-    {{- range (.Values.ingress | default dict).hosts }}
+    {{- $ing := (.Values.ingress | default dict) -}}
+    {{- $hosts := $ing.hosts -}}
+    {{- if kindIs "string" $hosts }}
+    # Single-host shorthand (string) -> synthesize a default rule
+    - host: {{ $hosts }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                {{- $base := include "korap.fullname" $ }}
+                name: {{ $base }}-kalamar{{ if and ($.Values.full | default dict).enabled ($.Values.kalamarFull | default dict).enabled }}-full{{- end }}
+                port:
+                  number: {{ (($.Values.service | default dict).kalamar | default dict).port }}
+    {{- else }}
+    {{- range $hosts }}
     - host: {{ .host }}
       http:
         paths:
           {{- range .paths }}
           - path: {{ .path }}
-            pathType: {{ .pathType }}
+            pathType: {{ .pathType | default "Prefix" }}
             backend:
               service:
                 {{- $base := include "korap.fullname" $ }}
@@ -30,10 +45,10 @@ spec:
                   number: {{ (($.Values.service | default dict).kalamar | default dict).port }}
           {{- end }}
     {{- end }}
+    {{- end }}
 
   {{- with (.Values.ingress | default dict).tls }}
   tls:
     {{- toYaml . | nindent 4 }}
   {{- end }}
-
 {{- end }}
