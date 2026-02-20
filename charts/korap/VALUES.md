@@ -628,7 +628,7 @@ full:
     size: 200Gi
 service:
   kalamar:
-    type: LoadBalancer
+    type: ClusterIP
 ingress:
   enabled: true
   className: nginx

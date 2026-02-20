@@ -4,6 +4,7 @@ version: 1.0.0
 description: Full production-ready Helm chart for the KorAP Corpus Analysis Platform.
 type: application
 appVersion: "1.0.0"
+  catalog.cattle.io/helm-values-schema: values.schema.json
 
 home: https://korap.ids-mannheim.de/
 sources:
@@ -23,6 +24,7 @@ maintainers:
     email: acdh-tech@oeaw.ac.at
 
 annotations:
+  catalog.cattle.io/helm-values-schema: values.schema.json
   chart.korap.values.documentation: |
     ================================
     KorAP Helm Chart – Values.yaml Documentation

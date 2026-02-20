@@ -1,0 +1,267 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "KorAP Helm Chart Values Schema",
+  "properties": {
+    "profile": {
+      "type": "string",
+      "description": "Deployment profile: lite or full",
+      "default": "lite",
+      "enum": ["lite", "full"]
+    },
+
+    "global": {
+      "type": "object",
+      "properties": {
+        "imagePullPolicy": {
+          "type": "string",
+          "default": "IfNotPresent",
+          "enum": ["Always", "IfNotPresent", "Never"]
+        }
+      }
+    },
+
+    "service": {
+      "type": "object",
+      "properties": {
+        "kalamar": {
+          "type": "object",
+          "properties": {
+            "port": { "type": "integer", "default": 64543 },
+            "type": {
+              "type": "string",
+              "default": "ClusterIP",
+              "enum": ["ClusterIP", "NodePort", "LoadBalancer"]
+            }
+          }
+        },
+        "kustvakt": {
+          "type": "object",
+          "properties": {
+            "port": { "type": "integer", "default": 8089 },
+            "type": {
+              "type": "string",
+              "default": "ClusterIP",
+              "enum": ["ClusterIP", "NodePort", "LoadBalancer"]
+            }
+          }
+        }
+      }
+    },
+
+    "kalamar": {
+      "type": "object",
+      "properties": {
+        "image": { "type": "string", "default": "korap/kalamar:latest" },
+        "replicaCount": { "type": "integer", "default": 1 },
+        "extraEnv": {
+          "type": "array",
+          "description": "Additional environment variables",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    },
+
+    "kalamarFull": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "image": { "type": "string", "default": "korap/kalamar:latest" },
+        "replicaCount": { "type": "integer", "default": 1 },
+        "extraEnv": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    },
+
+    "kustvakt": {
+      "type": "object",
+      "properties": {
+        "image": { "type": "string", "default": "korap/kustvakt:latest" },
+        "extraEnv": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    },
+
+    "kustvaktFull": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "image": { "type": "string", "default": "korap/kustvakt:latest-full" },
+        "extraEnv": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    },
+
+    "exampleIndex": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "image": { "type": "string", "default": "korap/example-index:0.1" }
+      }
+    },
+
+    "indexVolume": {
+      "type": "object",
+      "properties": {
+        "size": { "type": "string", "default": "10Gi" },
+        "storageClassName": { "type": ["string", "null"], "default": null },
+        "existingClaim": { "type": ["string", "null"], "default": null }
+      }
+    },
+
+    "ingress": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+        "className": { "type": ["string", "null"], "default": null },
+        "annotations": {
+          "type": "object",
+          "additionalProperties": { "type": "string" },
+          "default": {}
+        },
+        "hosts": {
+          "type": "array",
+          "description": "Host definitions for ingress rules",
+          "items": {
+            "type": "object",
+            "properties": {
+              "host": { "type": "string" },
+              "paths": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "path": { "type": "string" },
+                    "pathType": { "type": "string", "default": "Prefix" }
+                  },
+                  "required": ["path"]
+                }
+              }
+            },
+            "required": ["host", "paths"]
+          },
+          "default": []
+        },
+        "tls": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "secretName": { "type": "string" },
+              "hosts": {
+                "type": "array",
+                "items": { "type": "string" }
+              }
+            }
+          },
+          "default": []
+        }
+      }
+    },
+
+    "full": {
+      "type": "object",
+      "properties": {
+        "enabled": { "type": "boolean", "default": false },
+
+        "superClientInfoSecretName": {
+          "type": ["string", "null"],
+          "default": null
+        },
+
+        "superClientInfoKey": { "type": "string", "default": "super_client_info" },
+        "superClientInfoPath": { "type": "string", "default": "/kalamar/super_client_info" },
+
+        "superClientInfo": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": true },
+            "clientId": { "type": "string", "default": "korap-client" },
+            "clientSecret": { "type": "string", "default": "auto-generate" },
+            "redirectUri": {
+              "type": "string",
+              "default": "http://localhost:64543/oauth2/callback"
+            }
+          }
+        },
+
+        "kalamarProductionConf": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "content": { "type": "string", "default": "" }
+          }
+        },
+
+        "kustvaktLdap": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "host": { "type": "string", "default": "ldap.example.com" },
+            "port": { "type": "integer", "default": 389 },
+            "useSSL": { "type": "boolean", "default": false },
+            "useStartTLS": { "type": "boolean", "default": false },
+            "searchBase": { "type": "string", "default": "ou=users,dc=example,dc=com" },
+            "searchFilter": { "type": "string", "default": "uid=${login}" },
+            "sLoginDN": { "type": "string", "default": "cn=admin,dc=example,dc=com" },
+            "passwordSecret": { "type": ["string", "null"], "default": null },
+            "password": { "type": ["string", "null"], "default": null },
+            "passwordKey": { "type": "string", "default": "password" },
+            "emailAttribute": { "type": "string", "default": "mail" },
+            "authFilter": { "type": "string", "default": "(uid=${login})" },
+            "userNotBlockedFilter": { "type": ["string", "null"], "default": null },
+            "ldapTimeout": { "type": "integer", "default": 9000 },
+            "trustStore": { "type": ["string", "null"], "default": null }
+          }
+        },
+
+        "dataVolume": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "mountPath": { "type": "string", "default": "/kalamar/data" },
+            "size": { "type": "string", "default": "50Gi" },
+            "storageClassName": { "type": ["string", "null"], "default": null },
+            "existingClaim": { "type": ["string", "null"], "default": null }
+          }
+        },
+
+        "kustvaktDataVolume": {
+          "type": "object",
+          "properties": {
+            "enabled": { "type": "boolean", "default": false },
+            "mountPath": { "type": "string", "default": "/kustvakt/data" },
+            "size": { "type": "string", "default": "50Gi" },
+            "storageClassName": { "type": ["string", "null"], "default": null },
+            "existingClaim": { "type": ["string", "null"], "default": null }
+          }
+        }
+      }
+    },
+
+    "restartPolicy": {
+      "type": "string",
+      "enum": ["Always", "OnFailure", "Never"],
+      "default": "Always"
+    },
+
+    "securityContext": {
+      "type": "object",
+      "properties": {
+        "runAsUser": { "type": "integer", "default": 0 },
+        "runAsGroup": { "type": "integer", "default": 0 },
+        "fsGroup": { "type": "integer", "default": 0 }
+      }
+    }
+  }
+}
