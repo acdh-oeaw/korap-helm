@@ -31,18 +31,6 @@ kustvaktFull:
   image: korap/kustvakt:latest-full
   extraEnv: []
 
-keycloak:
-  enabled: false
-  authUrl: null
-  clientId: null
-  clientSecret: null
-  clientSecretKey: client-secret
-  clientSecretSecretName: null
-  issuer: null
-  jwksUri: null
-  tokenUrl: null
-  userinfoUrl: null
-
 exampleIndex:
   enabled: false
   image: korap/example-index:0.1
@@ -134,15 +122,6 @@ full:
     userNotBlockedFilter: null
     ldapTimeout: 9000
     trustStore: null
-  # Keycloak / OpenID Connect provider configuration for Kalamar (Full Profile)
-  keycloak:
-    enabled: false
-    # Issuer / base URL of Keycloak (e.g. https://auth.example.com/realms/<realm>)
-    issuer: "https://auth.example.com/realms/example"
-    authUrl: null
-    tokenUrl: null
-    userinfoUrl: null
-    jwksUri: null
 
     # Client credentials used by Kalamar to authenticate (preferred: provide secret via Kubernetes Secret)
     clientId: "korap-client"

@@ -390,53 +390,9 @@ helm install korap ./korap \
 - Anonymous access only
 - No login functionality
 
-### 15. Keycloak / OpenID Connect (OIDC) Support
+### 15. Kustvakt LDAP 
 
-If you run a Keycloak (or other OIDC) provider, you can configure Kalamar to use it directly instead of relying on the bundled `super_client_info` credentials.
-
-1) Enable Keycloak integration in the chart values:
-
-```yaml
-full:
-  enabled: true
-  keycloak:
-    enabled: true
-    issuer: "https://auth.example.com/realms/korap"
-    clientId: "korap-client"
-    clientSecretSecretName: "korap-keycloak-client-secret" # recommended
-    clientSecretKey: "client-secret"
-```
-
-2) Provide the client secret as a Kubernetes `Secret` (recommended):
-
-```bash
-kubectl create secret generic korap-keycloak-client-secret \
-  --from-literal=client-secret='VERY_SECRET' -n korap
-```
-
-3) Configure the Keycloak client redirect URL to match `full.superClientInfo.clientRedirectUri` (e.g. `https://korap.example.com/oauth2/callback`).
-
-4) Install/upgrade Helm with Keycloak enabled:
-
-```bash
-helm upgrade --install korap ./korap \
-  --namespace korap \
-  --set full.enabled=true \
-  --set kalamarFull.enabled=true \
-  --set 'full.keycloak.enabled=true' \
-  --set 'full.keycloak.issuer=https://auth.example.com/realms/korap' \
-  --set 'full.keycloak.clientId=korap-client' \
-  --set 'full.keycloak.clientSecretSecretName=korap-keycloak-client-secret'
-```
-
-Notes:
-- When `full.keycloak.enabled=true` the chart sets environment variables in Kalamar so the Auth plugin can use OIDC endpoints.
-- You can also supply explicit OIDC endpoint URLs (`authUrl`, `tokenUrl`, `userinfoUrl`, `jwksUri`) if discoverability is not available or you prefer explicit config.
-- If both Keycloak and the auto-generated `super_client_info` are enabled, Keycloak env vars will enable Auth via OIDC; adjust values according to your setup.
-
-### 16. Kustvakt LDAP (without Keycloak)
-
-You can run the full profile with LDAP-based authentication (Kustvakt) without a separate Keycloak/OIDC provider. The chart will mount an `ldap.conf` file and a password secret into the Kustvakt pod.
+You can run the full profile with LDAP-based authentication (Kustvakt). The chart will mount an `ldap.conf` file and a password secret into the Kustvakt pod.
 
 1) Configure LDAP in `values.yaml`:
 

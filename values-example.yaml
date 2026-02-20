@@ -1,11 +1,10 @@
-# KorAP Helm Chart - Keycloak Integration Example
+# KorAP Helm Chart Example
 # 
-# This example shows how to configure the KorAP chart to use Keycloak for authentication
+# This example shows how to configure the KorAP chart
 # 
 # Usage:
 #   helm install korap ./korap \
-#     --values values-keycloak-example.yaml \
-#     --set keycloak.clientSecret='YOUR_ACTUAL_SECRET_HERE'
+#     --values values-example.yaml 
 
 profile: full
 
@@ -53,24 +52,6 @@ full:
     storageClassName: null
     existingClaim: null
   
-  # OAuth2 Super Client Configuration (used with internal OAuth2)
-  superClientInfo:
-    enabled: false
-    clientId: korap-client
-    clientSecret: auto-generate
-    clientName: KorAP
-    clientType: CONFIDENTIAL
-    clientDescription: KorAP Kalamar Frontend
-    clientUrl: http://localhost:64543
-    clientRedirectUri: http://localhost:64543/oauth2/callback
-    super: true
-    refreshTokenExpiry: 31536000
-    permitted: true
-  
-  superClientInfoSecretName: null
-  superClientInfoKey: super_client_info
-  superClientInfoPath: /kalamar/super_client_info
-  
   # LDAP Configuration (optional, if you need LDAP authentication)
   kustvaktLdap:
     enabled: false
@@ -102,50 +83,6 @@ kustvaktFull:
   enabled: true
   image: korap/kustvakt:latest-full
   extraEnv: []
-
-# ============================================================================
-# KEYCLOAK CONFIGURATION
-# ============================================================================
-keycloak:
-  # Enable Keycloak authentication
-  enabled: true
-  
-  # Keycloak realm base URL
-  # This is typically <your-keycloak-server>/realms/<realm-name>
-  authUrl: https://auth.example.com/realms/korap
-  
-  # Keycloak token endpoint
-  # This is used to exchange authorization code for tokens
-  tokenUrl: https://auth.example.com/realms/korap/protocol/openid-connect/token
-  
-  # Keycloak userinfo endpoint
-  # This is used to fetch user information
-  userinfoUrl: https://auth.example.com/realms/korap/protocol/openid-connect/userinfo
-  
-  # OpenID Connect token issuer identifier
-  issuer: https://auth.example.com/realms/korap
-  
-  # JWKS URI for verifying tokens
-  # Usually <your-keycloak-server>/realms/<realm-name>/protocol/openid-connect/certs
-  jwksUri: https://auth.example.com/realms/korap/protocol/openid-connect/certs
-  
-  # OAuth2 Client ID (must be registered in Keycloak)
-  clientId: korap
-  
-  # OAuth2 Client Secret (get this from Keycloak client settings)
-  # IMPORTANT: Do NOT commit this to git! Use secrets management instead
-  # Set via command line:
-  #   --set keycloak.clientSecret="YOUR_SECRET_HERE"
-  # Or use an existing Kubernetes secret:
-  #   --set keycloak.clientSecretSecretName="your-existing-secret"
-  clientSecret: null
-  
-  # The key name in the Kubernetes secret where clientSecret is stored
-  clientSecretKey: client-secret
-  
-  # If you already have a Kubernetes secret with the client secret, reference it here:
-  # clientSecretSecretName: korap-keycloak-client-secret
-  clientSecretSecretName: null
 
 # ============================================================================
 # VOLUME CONFIGURATION

@@ -20,7 +20,7 @@ keywords:
 
 maintainers:
   - name: ACDH-CH DevOps
-    email: acdh-helpdesk@oeaw.ac.at
+    email: acdh-tech@oeaw.ac.at
 
 annotations:
   chart.korap.values.documentation: |

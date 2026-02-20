@@ -47,26 +47,6 @@ helm install korap ./korap \
 3. ✅ Kalamar Auth plugin enabled
 4. ✅ Login/OAuth functionality ready
 
-**Customize OAuth (optional):**
-```bash
-helm install korap ./korap \
-  --set full.enabled=true \
-  --set kalamarFull.enabled=true \
-  --set kustvaktFull.enabled=true \
-  --set 'full.superClientInfo.clientId=korap-prod' \
-  --set 'full.superClientInfo.clientRedirectUri=https://korap.example.com/oauth2/callback'
-```
-
-**Use external OAuth client (optional):**
-```bash
-kubectl create secret generic korap-oauth --from-file=super_client_info=./super_client_info -n korap
-
-helm install korap ./korap \
-  --set full.enabled=true \
-  --set kalamarFull.enabled=true \
-  --set kustvaktFull.enabled=true \
-  --set 'full.superClientInfoSecretName=korap-oauth'
-```
 
 ### 3. **Example Profile**
 Optional example index container for testing.
@@ -196,20 +176,6 @@ helm install korap ./korap \
 - ✅ Login functionality ready
 - ✅ Client secret = random 32-character string
 
-### Customize Auto-Generated OAuth
-
-```bash
-# For production environment
-helm install korap ./korap \
-  --namespace korap \
-  --set full.enabled=true \
-  --set kalamarFull.enabled=true \
-  --set 'full.superClientInfo.clientId=korap-prod' \
-  --set 'full.superClientInfo.clientName=KorAP Production' \
-  --set 'full.superClientInfo.clientUrl=https://korap.example.com' \
-  --set 'full.superClientInfo.clientRedirectUri=https://korap.example.com/oauth2/callback' \
-  --set 'full.superClientInfo.clientSecret=my-custom-secret'
-```
 
 ### View Generated OAuth Credentials
 

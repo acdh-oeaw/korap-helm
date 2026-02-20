@@ -55,13 +55,6 @@ NEXT STEPS:
 
 {{- if and (.Values.full | default dict).enabled (.Values.kalamarFull | default dict).enabled }}
 ADDITIONAL AUTH INFO:
-{{- if .Values.full.keycloak.enabled }}
-KEYCLOAK (OIDC) configured:
-  Issuer: {{ .Values.full.keycloak.issuer }}
-  Client ID: {{ .Values.full.keycloak.clientId }}
-  Client secret: {{- if .Values.full.keycloak.clientSecretSecretName }}from Secret '{{ .Values.full.keycloak.clientSecretSecretName }}' (key '{{ .Values.full.keycloak.clientSecretKey }}'){{- else }}provided in values (insecure){{- end }}
-  Ensure Keycloak client redirect URI matches `full.superClientInfo.clientRedirectUri`
-{{- end }}
 
 {{- if .Values.full.kustvaktLdap.enabled }}
 KUSTVAKT LDAP configured:
