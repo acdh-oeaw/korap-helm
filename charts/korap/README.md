@@ -339,30 +339,6 @@ helm install korap ./korap \
   --set 'full.superClientInfo.clientSecret=my-secure-secret-key'
 ```
 
-### 13. Using External OAuth Client (Optional)
-
-**full.superClientInfoSecretName** (string, default: `null`)
-- Reference a pre-existing Kubernetes secret instead of auto-generating
-- Useful if you want to manage OAuth credentials separately
-- If set, auto-generation is skipped and this secret is used
-- Secret must contain a file key `super_client_info` with OAuth JSON
-
-**To use an external secret:**
-
-```bash
-# 1. Create your super_client_info.json file with OAuth details
-# 2. Create Kubernetes secret from file
-kubectl create secret generic my-oauth-secret \
-  --from-file=super_client_info=./super_client_info.json \
-  -n korap
-
-# 3. Reference it in Helm
-helm install korap ./korap \
-  --set full.enabled=true \
-  --set kalamarFull.enabled=true \
-  --set 'full.superClientInfoSecretName=my-oauth-secret'
-```
-
 **full.superClientInfoKey** (string, default: `super_client_info`)
 - Key name inside the secret file containing OAuth data
 - Usually `super_client_info` (matches the JSON filename)
@@ -544,7 +520,7 @@ Notes:
 - See [Kalamar Documentation](https://github.com/KorAP/Kalamar) for all available settings
 - Customize API endpoints, plugins, authentication, and security policies as needed
 
-### 14. Security Configuration
+### 13. Security Configuration
 
 **securityContext.runAsUser** (integer, default: `0`)
 - UID for running containers
