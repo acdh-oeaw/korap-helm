@@ -23,7 +23,6 @@ maintainers:
     email: acdh-tech@oeaw.ac.at
 
 annotations:
-  catalog.cattle.io/helm-values-schema: values.schema.json
   chart.korap.values.documentation: |
     ================================
     KorAP Helm Chart – Values.yaml Documentation
