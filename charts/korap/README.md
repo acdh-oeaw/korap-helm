@@ -638,4 +638,3 @@ ingress:
 
 ## For more information
 - See [README.md](../README.md) for installation and usage
-- See [IMPLEMENTATION.md](../IMPLEMENTATION.md) for detailed architecture
