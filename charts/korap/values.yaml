@@ -62,14 +62,10 @@ full:
     enabled: true
     clientId: "korap-client"
     clientSecret: "auto-generate"  # Set to "auto-generate" for secure random secret, or provide your own
-    clientName: "KorAP"
-    clientType: "CONFIDENTIAL"
-    clientDescription: "KorAP Kalamar Frontend"
-    clientUrl: "http://localhost:64543"
-    clientRedirectUri: "http://localhost:64543/oauth2/callback"
+    clientRedirectUri: "https://korap.acdh-dev.oeaw.ac.at/oauth2/callback"
     super: true
-    refreshTokenExpiry: 31536000
-    permitted: true
+    
+  superClientInfoKey: super_client_info
   
   kalamarProductionConf:
     enabled: false
