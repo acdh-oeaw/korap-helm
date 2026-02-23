@@ -39,7 +39,7 @@ spec:
 
             {{- if and (.Values.full | default dict).enabled (.Values.full | default dict).superClientInfoSecretName }}
             - name: super-client
-              mountPath: /kustvakt/client/super_client_info
+              mountPath: /kustvakt/data/super_client_info
               subPath: super_client_info
             {{- end }}
 
