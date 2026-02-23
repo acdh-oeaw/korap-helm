@@ -7,17 +7,14 @@ metadata:
     {{- include "korap.labels" . | nindent 4 }}
     variant: full
 data:
-  ldap.conf: |
+  ldap.conf.template: |
     host={{ .Values.full.kustvaktLdap.host }}
     port={{ .Values.full.kustvaktLdap.port }}
     useSSL={{ .Values.full.kustvaktLdap.useSSL }}
     useStartTLS={{ .Values.full.kustvaktLdap.useStartTLS }}
 
-    # Must use sLoginDN, not bindDN
     sLoginDN={{ .Values.full.kustvaktLdap.sLoginDN }}
-
-    # Inject password from secret file
-    sLoginPW=/kustvakt/ldap/secret/{{ .Values.full.kustvaktLdap.passwordKey }}
+    sLoginPW=__LDAP_PASSWORD__
 
     searchBase={{ .Values.full.kustvaktLdap.searchBase }}
     searchFilter={{ .Values.full.kustvaktLdap.searchFilter }}
