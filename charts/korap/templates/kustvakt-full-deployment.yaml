@@ -1,120 +1,133 @@
 {{- if .Values.kustvaktFull.enabled }}
- apiVersion: apps/v1
- kind: Deployment
- metadata:
-   name: {{ include "korap.fullname" . }}-kustvakt-full
-   labels:
-     {{- include "korap.labels" . | nindent 4 }}
-     variant: full
- spec:
-   replicas: 1
-   selector:
-     matchLabels:
-       app: kustvakt-full
-       release: {{ .Release.Name }}
-   template:
-     metadata:
-       labels:
-         app: kustvakt-full
-         release: {{ .Release.Name }}
-     spec:
-       {{- with .Values.securityContext }}
-       securityContext:
-         {{- toYaml . | nindent 8 }}
-       {{- end }}
-       serviceAccountName: {{ include "korap.fullname" . }}
-       restartPolicy: {{ .Values.restartPolicy | default "Always" }}
-       containers:
-         - name: kustvakt-full
-           image: "{{ (.Values.kustvaktFull | default dict).image }}"
-           imagePullPolicy: {{ (.Values.global | default dict).imagePullPolicy }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "korap.fullname" . }}-kustvakt-full
+  labels:
+    {{- include "korap.labels" . | nindent 4 }}
+    variant: full
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kustvakt-full
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: kustvakt-full
+        release: {{ .Release.Name }}
+    spec:
+      {{- with .Values.securityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "korap.fullname" . }}
+      restartPolicy: {{ .Values.restartPolicy | default "Always" }}
+      containers:
+        - name: kustvakt-full
+          image: "{{ (.Values.kustvaktFull | default dict).image }}"
+          imagePullPolicy: {{ (.Values.global | default dict).imagePullPolicy }}
 
-           ports:
-             - name: http
-               containerPort: {{ ((.Values.service | default dict).kustvakt | default dict).port }}
+          ports:
+            - name: http
+              containerPort: {{ ((.Values.service | default dict).kustvakt | default dict).port }}
 
-           env:
-             {{- with (.Values.kustvaktFull | default dict).extraEnv }}
-             {{- toYaml . | nindent 12 }}
-             {{- end }}
-             {{- if and (.Values.full | default dict).enabled (.Values.full.kustvaktLdap.enabled) }}
-             - name: KUSTVAKT_LDAP_CONF
-               value: "/kustvakt/ldap/ldap.conf"
-             {{- end }}
+          env:
+            {{- with (.Values.kustvaktFull | default dict).extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+            {{- if and (.Values.full | default dict).enabled (.Values.full.kustvaktLdap.enabled) }}
+            - name: KUSTVAKT_LDAP_CONF
+              value: "/kustvakt/ldap/ldap.conf"
+            {{- end }}
 
-           volumeMounts:
-             - name: index
-               mountPath: /kustvakt/index
+          volumeMounts:
+            - name: index
+              mountPath: /kustvakt/index
 
-             {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).kustvaktDataVolume | default dict).enabled }}
-             - name: data
-               mountPath: "{{ ((.Values.full | default dict).kustvaktDataVolume | default dict).mountPath }}"
-             {{- end }}
+            {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).kustvaktDataVolume | default dict).enabled }}
+            - name: data
+              mountPath: "{{ ((.Values.full | default dict).kustvaktDataVolume | default dict).mountPath }}"
+            {{- end }}
 
-             {{- if and (.Values.full | default dict).enabled (.Values.full.kustvaktLdap.enabled) }}
-             - name: kustvakt-ldap-config
-               mountPath: /kustvakt/ldap
-               readOnly: true
-             - name: kustvakt-ldap-secret
-               mountPath: /kustvakt/ldap/secret
-               readOnly: true
-             {{- end }}
+            {{- if and (.Values.full | default dict).enabled (.Values.full.kustvaktLdap.enabled) }}
+            - name: kustvakt-ldap-config
+              mountPath: /kustvakt/ldap
+              readOnly: true
+            - name: kustvakt-ldap-secret
+              mountPath: /kustvakt/ldap/secret
+              readOnly: true
+            {{- end }}
 
-             {{- /* Mount the sane super_client_info Secret like in Kalamar */}}
-             {{- $secretName := (.Values.full | default dict).superClientInfoSecretName }}
-             {{- if not $secretName }}
-             {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).superClientInfo | default dict).enabled }}
-             {{- $secretName = printf "%s-super-client-info" (include "korap.fullname" .) }}
-             {{- end }}
-             {{- end }}
-             {{- if $secretName }}
-             - name: super-client
-               mountPath: "/kustvakt/client/super_client_info"
-               subPath: "{{ ((.Values.full | default dict).superClientInfoKey | default "super_client_info") }}"
-               readOnly: true
-             {{- end }}
+            {{- /* Mount the same super_client_info Secret as in Kalamar */ -}}
+            {{- $scSecret := (.Values.full | default dict).superClientInfoSecretName }}
+            {{- if not $scSecret }}
+            {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).superClientInfo | default dict).enabled }}
+            {{- $scSecret = printf "%s-super-client-info" (include "korap.fullname" .) }}
+            {{- end }}
+            {{- end }}
+            {{- if $scSecret }}
+            - name: super-client
+              mountPath: "/kustvakt/client/super_client_info"
+              subPath: "{{ ((.Values.full | default dict).superClientInfoKey | default "super_client_info") }}"
+              readOnly: true
+            {{- end }}
 
-       volumes:
-         - name: index
-           persistentVolumeClaim:
-             claimName: {{ if (.Values.indexVolume | default dict).existingClaim }}{{ (.Values.indexVolume | default dict).existingClaim }}{{ else }}{{ include "korap.fullname" . }}-index{{ end }}
+      volumes:
+        - name: index
+          persistentVolumeClaim:
+            claimName: {{ if (.Values.indexVolume | default dict).existingClaim }}{{ (.Values.indexVolume | default dict).existingClaim }}{{ else }}{{ include "korap.fullname" . }}-index{{ end }}
 
-         {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).kustvaktDataVolume | default dict).enabled }}
-         - name: data
-           persistentVolumeClaim:
-             claimName: {{ if ((.Values.full | default dict).kustvaktDataVolume | default dict).existingClaim }}{{ ((.Values.full | default dict).kustvaktDataVolume | default dict).existingClaim }}{{ else }}{{ include "korap.fullname" . }}-kustvakt-data{{ end }}
-         {{- end }}
+        {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).kustvaktDataVolume | default dict).enabled }}
+        - name: data
+          persistentVolumeClaim:
+            claimName: {{ if ((.Values.full | default dict).kustvaktDataVolume | default dict).existingClaim }}{{ ((.Values.full | default dict).kustvaktDataVolume | default dict).existingClaim }}{{ else }}{{ include "korap.fullname" . }}-kustvakt-data{{ end }}
+        {{- end }}
 
-         {{- if and (.Values.full | default dict).enabled (.Values.full.kustvaktLdap.enabled) }}
-         - name: kustvakt-ldap-config
-           configMap:
-             name: {{ include "korap.fullname" . }}-kustvakt-ldap-config
-         {{- if .Values.full.kustvaktLdap.passwordSecret }}
-         - name: kustvakt-ldap-secret
-           secret:
-             secretName: {{ .Values.full.kustvaktLdap.passwordSecret }}
-         {{- else if .Values.full.kustvaktLdap.password }}
-         - name: kustvakt-ldap-secret
-           secret:
-             secretName: {{ include "korap.fullname" . }}-kustvakt-ldap-secret
-         {{- end }}
-         {{- end }}
+        {{- if and (.Values.full | default dict).enabled (.Values.full.kustvaktLdap.enabled) }}
+        - name: kustvakt-ldap-config
+          configMap:
+            name: {{ include "korap.fullname" . }}-kustvakt-ldap-config
+        {{- if .Values.full.kustvaktLdap.passwordSecret }}
+        - name: kustvakt-ldap-secret
+          secret:
+            secretName: {{ .Values.full.kustvaktLdap.passwordSecret }}
+        {{- else if .Values.full.kustvaktLdap.password }}
+        - name: kustvakt-ldap-secret
+          secret:
+            secretName: {{ include "korap.fullname" . }}-kustvakt-ldap-secret
+        {{- end }}
+        {{- end }}
 
-         {{- /* Volume for super_client_info Secret (the same like in Kalamar) */}}
-         {{- $secretName := (.Values.full | default dict).superClientInfoSecretName }}
-         {{- if not $secretName }}
-         {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).superClientInfo | default dict).enabled }}
-         {{- $secretName = printf "%s-super-client-info" (include "korap.fullname" .) }}
-         {{- end }}
-         {{- end }}
-         {{- if $secretName }}
-         - name: super-client
-           secret:
-             secretName: {{ $secretName }}
-         {{- end }}
+        {{- /* Secret volume for super_client_info */ -}}
+        {{- $scSecret := (.Values.full | default dict).superClientInfoSecretName }}
+        {{- if not $scSecret }}
+        {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).superClientInfo | default dict).enabled }}
+        {{- $scSecret = printf "%s-super-client-info" (include "korap.fullname" .) }}
+        {{- end }}
+        {{- end }}
+        {{- if $scSecret }}
+        - name: super-client
+          secret:
+            secretName: {{ $scSecret }}
+        {{- end }}
 
- ---
- apiVersion: v1
- kind: Service
- ...
- {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "korap.fullname" . }}-kustvakt-full
+  labels:
+    {{- include "korap.labels" . | nindent 4 }}
+    variant: full
+spec:
+  type: {{ ((.Values.service | default dict).kustvakt | default dict).type }}
+  selector:
+    app: kustvakt-full
+    release: {{ .Release.Name }}
+  ports:
+    - name: http
+      port: {{ ((.Values.service | default dict).kustvakt | default dict).port }}
+      targetPort: http
+{{- end }}
