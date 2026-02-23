@@ -40,6 +40,13 @@ spec:
             {{- if and (.Values.full | default dict).enabled (.Values.full.kustvaktLdap.enabled) }}
             - name: KUSTVAKT_LDAP_CONF
               value: "/kustvakt/ldap/ldap.conf"
+
+            # *** REQUIRED FIX ***
+            - name: KUSTVAKT_LDAP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.full.kustvaktLdap.passwordSecret }}
+                  key: {{ .Values.full.kustvaktLdap.passwordKey }}
             {{- end }}
 
           volumeMounts:
@@ -55,12 +62,13 @@ spec:
             - name: kustvakt-ldap-config
               mountPath: /kustvakt/ldap
               readOnly: true
+
             - name: kustvakt-ldap-secret
               mountPath: /kustvakt/ldap/secret
               readOnly: true
             {{- end }}
 
-            {{- /* Mount the same super_client_info Secret as in Kalamar */ -}}
+            {{- /* super_client_info override */ -}}
             {{- $scSecret := (.Values.full | default dict).superClientInfoSecretName }}
             {{- if not $scSecret }}
             {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).superClientInfo | default dict).enabled }}
@@ -69,7 +77,7 @@ spec:
             {{- end }}
             {{- if $scSecret }}
             - name: super-client
-              mountPath: "/kustvakt/client/super_client_info"
+              mountPath: "/kustvakt/data/super_client_info"
               subPath: "{{ ((.Values.full | default dict).superClientInfoKey | default "super_client_info") }}"
               readOnly: true
             {{- end }}
@@ -89,24 +97,12 @@ spec:
         - name: kustvakt-ldap-config
           configMap:
             name: {{ include "korap.fullname" . }}-kustvakt-ldap-config
-        {{- if .Values.full.kustvaktLdap.passwordSecret }}
+
         - name: kustvakt-ldap-secret
           secret:
             secretName: {{ .Values.full.kustvaktLdap.passwordSecret }}
-        {{- else if .Values.full.kustvaktLdap.password }}
-        - name: kustvakt-ldap-secret
-          secret:
-            secretName: {{ include "korap.fullname" . }}-kustvakt-ldap-secret
-        {{- end }}
         {{- end }}
 
-        {{- /* Secret volume for super_client_info */ -}}
-        {{- $scSecret := (.Values.full | default dict).superClientInfoSecretName }}
-        {{- if not $scSecret }}
-        {{- if and (.Values.full | default dict).enabled ((.Values.full | default dict).superClientInfo | default dict).enabled }}
-        {{- $scSecret = printf "%s-super-client-info" (include "korap.fullname" .) }}
-        {{- end }}
-        {{- end }}
         {{- if $scSecret }}
         - name: super-client
           secret:
