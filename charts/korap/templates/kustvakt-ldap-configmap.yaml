@@ -8,14 +8,19 @@ metadata:
     variant: full
 data:
   ldap.conf: |
-    # Kustvakt LDAP configuration generated from Helm values
     host={{ .Values.full.kustvaktLdap.host }}
     port={{ .Values.full.kustvaktLdap.port }}
     useSSL={{ .Values.full.kustvaktLdap.useSSL }}
     useStartTLS={{ .Values.full.kustvaktLdap.useStartTLS }}
+
+    # Must use sLoginDN, not bindDN
+    sLoginDN={{ .Values.full.kustvaktLdap.sLoginDN }}
+
+    # Inject password from secret file
+    sLoginPW=/kustvakt/ldap/secret/{{ .Values.full.kustvaktLdap.passwordKey }}
+
     searchBase={{ .Values.full.kustvaktLdap.searchBase }}
     searchFilter={{ .Values.full.kustvaktLdap.searchFilter }}
-    bindDN={{ .Values.full.kustvaktLdap.sLoginDN }}
     emailAttribute={{ .Values.full.kustvaktLdap.emailAttribute | default "mail" }}
     authFilter={{ .Values.full.kustvaktLdap.authFilter }}
     userNotBlockedFilter={{ .Values.full.kustvaktLdap.userNotBlockedFilter | default "" }}
