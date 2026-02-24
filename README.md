@@ -67,8 +67,6 @@ korap-helm/
     │   ├── kalamar-configmap.yaml
     │   ├── kustvakt-deployment.yaml
     │   ├── kustvakt-full-deployment.yaml
-    │   ├── example-index-deployment.yaml
-    │   ├── full-init-job.yaml
     │   ├── ingress.yaml
     │   ├── super-client-info-secret.yaml
     │   ├── pvc-index.yaml
