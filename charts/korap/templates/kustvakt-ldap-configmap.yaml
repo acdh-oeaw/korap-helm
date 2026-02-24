@@ -8,14 +8,13 @@ metadata:
     variant: full
 data:
   ldap.conf.template: |
+    useEmbeddedServer={{ .Values.full.kustvaktLdap.embededServer | default "false" }}
     host={{ .Values.full.kustvaktLdap.host }}
     port={{ .Values.full.kustvaktLdap.port }}
     useSSL={{ .Values.full.kustvaktLdap.useSSL }}
     useStartTLS={{ .Values.full.kustvaktLdap.useStartTLS }}
-
     sLoginDN={{ .Values.full.kustvaktLdap.sLoginDN }}
-    sLoginPW=__LDAP_PASSWORD__
-
+    pwd=__LDAP_PASSWORD__
     searchBase={{ .Values.full.kustvaktLdap.searchBase }}
     searchFilter={{ .Values.full.kustvaktLdap.searchFilter }}
     emailAttribute={{ .Values.full.kustvaktLdap.emailAttribute | default "mail" }}

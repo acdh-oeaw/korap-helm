@@ -89,7 +89,8 @@ full:
     enabled: true
 
     # LDAP Server
-    host: "ldap.oeaw.ads"
+    useEmbeddedServer: false
+    host: "ldap.host"
     port: 636
     useSSL: true
     useStartTLS: false
