@@ -34,7 +34,6 @@ kustvaktFull:
 
 exampleIndex:
   enabled: false
-  image: korap/example-index:0.1
 
 indexVolume:
   size: 10Gi
