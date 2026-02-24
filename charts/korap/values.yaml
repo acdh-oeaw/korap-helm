@@ -96,11 +96,11 @@ full:
     useStartTLS: false
 
     # LDAP Search
-    searchBase: "DC=oeaw,DC=ads"
+    searchBase: ""
     searchFilter: "(&(sAMAccountName=${login})(objectClass=user))"
 
     # LDAP Bind Account
-    sLoginDN: "CN=acdhldap,DC=oeaw,DC=ads"
+    sLoginDN: "user@domain"
 
     # OPTION 1: Password stored in Kubernetes Secret (recommended)
     passwordSecret: kustvakt-ldap-secret   # <-- The secret that contains the password
