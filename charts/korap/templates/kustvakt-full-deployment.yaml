@@ -166,6 +166,7 @@ spec:
         - name: kustvakt-ldap-secret
           secret:
             secretName: {{ ternary .Values.full.kustvaktLdap.passwordSecret (printf "%s-kustvakt-ldap-secret" (include "korap.fullname" .)) (hasKey .Values.full.kustvaktLdap "passwordSecret") }}
+            optional: false     # 🚨 ENSURES FILE MUST EXIST AND NOT BE EMPTY
         - name: kustvakt-ldap-generated
           emptyDir: {}
         {{- end }}
