@@ -18,7 +18,7 @@ data:
     searchBase={{ .Values.full.kustvaktLdap.searchBase }}
     searchFilter={{ .Values.full.kustvaktLdap.searchFilter }}
     emailAttribute={{ .Values.full.kustvaktLdap.emailAttribute | default "mail" }}
-    authFilter={{ .Values.full.kustvaktLdap.authFilter | default "" }
+    authFilter={{ .Values.full.kustvaktLdap.authFilter | default "" }}
     userNotBlockedFilter={{ .Values.full.kustvaktLdap.userNotBlockedFilter | default "" }}
     ldapTimeout={{ .Values.full.kustvaktLdap.ldapTimeout }}
     trustStore={{ .Values.full.kustvaktLdap.trustStore | default "" }}
