@@ -97,7 +97,7 @@ full:
 
     # LDAP Search
     searchBase: ""
-    searchFilter: "(& (objectClass=User) (| (sAMAccountName=${login}) (mail=${login}) ) )"
+    searchFilter: "(&(objectClass=User)(|(sAMAccountName=${login})(mail=${login})))"
 
     # LDAP Bind Account
     sLoginDN: "user@domain"
