@@ -97,7 +97,7 @@ full:
 
     # LDAP Search
     searchBase: ""
-    searchFilter: "(&(sAMAccountName=${login})(objectClass=user))"
+    searchFilter: "(& (objectClass=User) (| (sAMAccountName=${login}) (mail=${login}) ) )"
 
     # LDAP Bind Account
     sLoginDN: "user@domain"
@@ -111,7 +111,7 @@ full:
 
     # Optional fields
     emailAttribute: "mail"
-    authFilter: "(sAMAccountName=${login})"
+    authFilter: null
     userNotBlockedFilter: null
     ldapTimeout: 9000
     trustStore: null
