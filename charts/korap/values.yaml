@@ -115,6 +115,7 @@ full:
     userNotBlockedFilter: null
     ldapTimeout: 9000
     trustStore: null
+    uidAttribute: "sAMAccountName"
 
   dataVolume:
     enabled: false

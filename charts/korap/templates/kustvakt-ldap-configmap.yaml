@@ -22,4 +22,5 @@ data:
     userNotBlockedFilter={{ .Values.full.kustvaktLdap.userNotBlockedFilter | default "" }}
     ldapTimeout={{ .Values.full.kustvaktLdap.ldapTimeout }}
     trustStore={{ .Values.full.kustvaktLdap.trustStore | default "" }}
+    uidAttribute={{ .Values.full.kustvaktLdap.uidAttribute | default "sAMAccountName" }}
 {{- end }}
