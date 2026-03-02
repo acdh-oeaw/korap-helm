@@ -356,9 +356,7 @@ This repository includes comprehensive documentation for various deployment scen
 | File | Purpose |
 |------|---------|
 | [README.md](README.md) | This file - Overview and quick start (you are here) |
-| [IMPLEMENTATION.md](IMPLEMENTATION.md) | Complete feature documentation and technical details |
 | [values-example.yaml](values-example.yaml) | Complete example values file |
-| [RANCHER_INTEGRATION.md](RANCHER_INTEGRATION.md) | Integration with Rancher for additional management features |
 
 ---
 
