@@ -52,9 +52,7 @@ This chart provides flexible, profile-based deployments supporting lite and full
 korap-helm/
 ├── Chart.yaml
 ├── README.md
-├── IMPLEMENTATION.md
 ├── LICENSE
-├── RANCHER_INTEGRATION.md
 ├── values-example.yaml
 └── charts/korap/
     ├── Chart.yaml
